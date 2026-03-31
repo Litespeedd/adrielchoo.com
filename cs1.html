@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scaling Design Operations — Adriel Choo</title>
+  <meta name="description" content="Case Study: From legacy PowerPoint handoffs to a fully tokenized, AEM-ready design system spanning two business units at Optimum." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────────── */
+    :root {
+      --bg:            #080808;
+      --bg-raised:     #0d0d0d;
+      --surface:       #121212;
+      --surface-2:     #171717;
+      --border:        rgba(255,255,255,0.07);
+      --border-mid:    rgba(255,255,255,0.12);
+      --border-hi:     rgba(255,255,255,0.2);
+      --text-1:        #F0F0EC;
+      --text-2:        #888;
+      --text-3:        #444;
+      --text-4:        #2a2a2a;
+      --accent:        #FF1F1F;
+      --accent-lo:     rgba(255,31,31,0.06);
+      --accent-border: rgba(255,31,31,0.28);
+      --font-display:  'Bebas Neue', sans-serif;
+      --font-mono:     'Space Mono', monospace;
+      --font-body:     'Barlow', sans-serif;
+      --ease:          cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      --max:           860px;
+    }
+
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; cursor: none; font-size: 16px; }
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-body);
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* Scanline */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+      pointer-events: none;
+      z-index: 9000;
+    }
+
+    /* ── CURSOR ─────────────────────────────────────────────── */
+    #cursor {
+      position: fixed; width: 7px; height: 7px;
+      background: var(--accent); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: width 0.15s var(--ease), height 0.15s var(--ease);
+    }
+    #cursor-ring {
+      position: fixed; width: 30px; height: 30px;
+      border: 1px solid rgba(255,31,31,0.35); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: width 0.25s var(--ease), height 0.25s var(--ease), border-color 0.25s;
+    }
+    #cursor.active  { width: 10px; height: 10px; }
+    #cursor-ring.active { width: 40px; height: 40px; border-color: var(--accent); }
+
+    /* ── STATUS BAR ─────────────────────────────────────────── */
+    #statusbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 28px;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; z-index: 800;
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-3);
+    }
+    .s-left, .s-right { display: flex; align-items: center; gap: 20px; }
+    .blink-dot {
+      display: inline-block; width: 5px; height: 5px;
+      background: var(--accent); border-radius: 50%;
+      animation: blink 1.4s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── CS NAV ─────────────────────────────────────────────── */
+    #cs-nav {
+      position: fixed; top: 28px; left: 0; right: 0; height: 56px;
+      background: rgba(8,8,8,0.94);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; z-index: 799;
+    }
+    .cs-nav-back {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text-2); transition: color 0.2s;
+    }
+    .cs-nav-back:hover { color: var(--text-1); }
+    .cs-nav-back::before {
+      content: '←';
+      font-size: 11px;
+    }
+    .cs-nav-title {
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text-3); display: none;
+    }
+    .cs-nav-idx {
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .cs-nav-idx span { color: var(--accent); }
+
+    /* ── HERO ───────────────────────────────────────────────── */
+    #cs-hero {
+      padding: 128px 40px 80px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .cs-hero-grid {
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .cs-hero-vignette {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 80%, transparent 20%, var(--bg) 75%);
+      pointer-events: none;
+    }
+    .cs-hero-inner { position: relative; z-index: 1; max-width: 1100px; }
+    .cs-eyebrow {
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .cs-eyebrow::before { content: '01 / 04'; color: var(--text-3); }
+    .cs-eyebrow::after  { content: ''; display: inline-block; width: 32px; height: 1px; background: var(--accent-border); }
+    .cs-title {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 8vw, 108px);
+      line-height: 0.9; letter-spacing: 0.01em;
+      color: var(--text-1); margin-bottom: 40px;
+    }
+    .cs-meta-strip {
+      display: flex; gap: 48px; flex-wrap: wrap;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .cs-meta-item { display: flex; flex-direction: column; gap: 6px; }
+    .cs-meta-key {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .cs-meta-val {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-1); line-height: 1.5;
+    }
+
+    /* ── BODY LAYOUT ────────────────────────────────────────── */
+    .cs-body {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    /* Section */
+    .cs-section {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 48px;
+      padding: 64px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cs-section:last-child { border-bottom: none; }
+    .cs-sec-label {
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--accent); padding-top: 4px;
+      line-height: 1.8;
+    }
+    .cs-sec-label small {
+      display: block;
+      color: var(--text-3);
+      font-size: 7px;
+      letter-spacing: 0.2em;
+      margin-top: 6px;
+    }
+    .cs-sec-body { display: flex; flex-direction: column; gap: 24px; }
+
+    /* Typography */
+    .cs-h2 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 3.5vw, 46px);
+      line-height: 0.95; letter-spacing: 0.02em;
+      color: var(--text-1);
+    }
+    .cs-h3 {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text-1); margin-bottom: 4px;
+    }
+    .cs-p {
+      font-size: 15px; color: var(--text-2);
+      line-height: 1.75; max-width: 640px;
+    }
+    .cs-p strong { color: var(--text-1); font-weight: 400; }
+    .cs-p em { color: var(--accent); font-style: normal; }
+
+    /* Constraint card */
+    .constraint-card {
+      border-left: 2px solid var(--border-mid);
+      padding: 20px 0 20px 24px;
+      display: flex; flex-direction: column; gap: 16px;
+      transition: border-color 0.2s;
+    }
+    .constraint-card:hover { border-color: var(--accent-border); }
+    .constraint-problem {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .constraint-label {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .constraint-title {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--accent); letter-spacing: 0.05em;
+    }
+    .constraint-divider {
+      width: 20px; height: 1px;
+      background: var(--border-mid);
+    }
+    .constraint-nav {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .constraint-nav-label {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    /* Callout box */
+    .cs-callout {
+      background: var(--bg-raised);
+      border: 1px solid var(--border-mid);
+      border-left: 2px solid var(--accent);
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .cs-callout-label {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    /* Two-column grid within body */
+    .cs-2col {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .cs-2col-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 24px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .cs-2col-item:hover { border-color: var(--border-hi); }
+    .cs-2col-item .label {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--accent);
+    }
+    .cs-2col-item .title {
+      font-size: 14px; font-weight: 500; color: var(--text-1);
+    }
+
+    /* Metric highlight */
+    .cs-metrics {
+      display: flex; flex-wrap: wrap; gap: 2px;
+      margin-top: 8px;
+    }
+    .cs-metric {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex; flex-direction: column; gap: 8px;
+      flex: 1; min-width: 160px;
+    }
+    .cs-metric-val {
+      font-family: var(--font-display);
+      font-size: 36px; line-height: 1;
+      color: var(--text-1);
+    }
+    .cs-metric-label {
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--text-3); line-height: 1.6;
+    }
+
+    /* Image blocks */
+    .cs-img-full {
+      width: 100%;
+      border: 1px solid var(--border-mid);
+      display: block;
+    }
+    .cs-img-pair {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .cs-img-pair img {
+      width: 100%; height: 280px;
+      object-fit: cover; object-position: top;
+      border: 1px solid var(--border-mid);
+    }
+    .cs-img-cap {
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-3); margin-top: 10px;
+      display: flex; justify-content: space-between;
+    }
+
+    /* Full-bleed image section */
+    .cs-img-section {
+      padding: 64px 40px;
+      background: var(--bg-raised);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .cs-img-section .cs-body { padding: 0; }
+    .cs-img-section-title {
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--text-3); margin-bottom: 24px;
+    }
+    .cs-img-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+    }
+    .cs-img-grid img {
+      width: 100%; height: 200px;
+      object-fit: cover; object-position: top;
+      border: 1px solid var(--border-mid);
+    }
+    .cs-img-grid img.tall {
+      height: 280px;
+    }
+
+    /* Nav between case studies */
+    .cs-footer-nav {
+      padding: 64px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-top: 1px solid var(--border);
+    }
+    .cs-footer-link {
+      display: flex; flex-direction: column; gap: 8px;
+      transition: opacity 0.2s;
+    }
+    .cs-footer-link:hover { opacity: 0.7; }
+    .cs-footer-dir {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .cs-footer-name {
+      font-family: var(--font-display);
+      font-size: 22px; letter-spacing: 0.03em;
+      color: var(--text-1);
+    }
+    .cs-footer-sep {
+      font-family: var(--font-mono); font-size: 20px;
+      color: var(--text-4);
+    }
+
+    /* Footer */
+    footer {
+      padding: 24px 40px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    /* Reveal */
+    .reveal {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      #cs-hero { padding: 108px 20px 60px; }
+      .cs-body { padding: 0 20px; }
+      .cs-section { grid-template-columns: 1fr; gap: 24px; }
+      .cs-sec-label { padding-top: 0; }
+      .cs-2col { grid-template-columns: 1fr; }
+      .cs-img-pair { grid-template-columns: 1fr; }
+      .cs-img-pair img { height: 200px; }
+      .cs-img-grid { grid-template-columns: 1fr 1fr; }
+      .cs-img-grid img { height: 140px; }
+      .cs-img-grid img.tall { height: 180px; }
+      .cs-footer-nav { flex-direction: column; gap: 32px; align-items: flex-start; }
+      .cs-meta-strip { gap: 24px; }
+      #cs-nav { padding: 0 20px; }
+      html { cursor: auto; }
+      #cursor, #cursor-ring { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- ── STATUS BAR ──────────────────────────────────────── -->
+  <div id="statusbar">
+    <div class="s-left">
+      <span>AC · Case Study 01</span>
+      <span class="blink-dot"></span>
+    </div>
+    <div class="s-right">
+      <span id="clock">--:--</span>
+      <span>NYC</span>
+    </div>
+  </div>
+
+  <!-- ── CS NAV ──────────────────────────────────────────── -->
+  <nav id="cs-nav">
+    <a href="/index.html" class="cs-nav-back">Back to Portfolio</a>
+    <span class="cs-nav-title">Scaling Design Operations</span>
+    <span class="cs-nav-idx"><span>01</span> / 04</span>
+  </nav>
+
+  <!-- ── HERO ────────────────────────────────────────────── -->
+  <header id="cs-hero">
+    <div class="cs-hero-grid"></div>
+    <div class="cs-hero-vignette"></div>
+    <div class="cs-hero-inner">
+      <div class="cs-eyebrow">Design Systems · Team Leadership · AEM</div>
+      <h1 class="cs-title">SCALING<br>DESIGN<br>OPERATIONS</h1>
+      <div class="cs-meta-strip">
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Role</span>
+          <span class="cs-meta-val">UX/UI Lead &amp;<br>Systems Architect</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Company</span>
+          <span class="cs-meta-val">Optimum Mobile<br>Altice USA</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Timeline</span>
+          <span class="cs-meta-val">2021 → Present<br>4+ Years</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Team</span>
+          <span class="cs-meta-val">3 Designers<br>+ External Vendor</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Tools</span>
+          <span class="cs-meta-val">Figma · Variables<br>AEM · Workfront</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── BODY ────────────────────────────────────────────── -->
+  <div class="cs-body">
+
+    <!-- OVERVIEW -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Overview
+        <small>The Problem</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">From Legacy Debt<br>to Unified Systems</h2>
+        <p class="cs-p">
+          In 2021, I joined a design environment where product releases were managed via
+          <strong>static PowerPoint decks</strong>. My first priority was replacing this manual process
+          with a professional Figma infrastructure — which I achieved within the first year.
+        </p>
+        <p class="cs-p">
+          As the Mobile business scaled, the challenge shifted from simply "having a library"
+          to building a <em>sophisticated, multi-variant ecosystem</em> capable of handling increasingly
+          complex buyflows and self-care journeys.
+        </p>
+        <p class="cs-p">
+          By late 2025, the goal evolved again: transitioning static components into a fully
+          responsive, variable-driven system for <strong>1:1 parity with our AEM implementation</strong>.
+          Simultaneously, my scope expanded to lead Fixed Business design strategy —
+          guiding that team in establishing their own foundational library while building
+          a unified, dev-ready handoff process across both business units.
+        </p>
+      </div>
+    </div>
+
+    <!-- CONSTRAINTS -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Process
+        <small>Constraints &amp; Navigation</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Four Problems.<br>Four Solutions.</h2>
+        <p class="cs-p">
+          Transitioning a legacy enterprise from fragmented design "decks" to a unified Figma
+          ecosystem required navigating deep technical debt and cultural resistance — simultaneously.
+        </p>
+
+        <div class="constraint-card">
+          <div class="constraint-problem">
+            <span class="constraint-label">Constraint 01</span>
+            <span class="constraint-title">"The Zero-Baseline Debt"</span>
+            <p class="cs-p" style="margin-top:8px">
+              When I started, there were virtually no existing Figma designs for the live site.
+              Creating a working foundation meant manually replicating live site designs to
+              establish a baseline from scratch.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div class="constraint-nav">
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p">
+              I treated the replication as an <strong>audit opportunity</strong>. While rebuilding,
+              I identified inconsistencies and used high-level training sessions to establish Figma
+              as the "Single Source of Truth" — encouraging cross-functional collaboration through
+              interactive commenting and live reviews.
+            </p>
+          </div>
+        </div>
+
+        <div class="constraint-card">
+          <div class="constraint-problem">
+            <span class="constraint-label">Constraint 02</span>
+            <span class="constraint-title">"The Single-File Bottleneck"</span>
+            <p class="cs-p" style="margin-top:8px">
+              In Phase 2, the library and page designs lived in a single file. As component count
+              grew, the file became unstable for fast-turnover monthly releases. Designer performance
+              suffered, and version control was unreliable.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div class="constraint-nav">
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p">
+              I established a new <strong>Quarterly Release Model</strong> — decoupling the Parent
+              Component Library into its own dedicated file and presenting the new implementation
+              method to Marketing and Product, ensuring they understood how to leverage
+              separate design and delivery files.
+            </p>
+          </div>
+        </div>
+
+        <div class="constraint-card">
+          <div class="constraint-problem">
+            <span class="constraint-label">Constraint 03</span>
+            <span class="constraint-title">"The Copy-Heavy Manual Grind"</span>
+            <p class="cs-p" style="margin-top:8px">
+              During peak release seasons — iPhone and Samsung launches — the library lacked
+              multi-edit functionality. Updating duplicate content across dozens of pages became
+              a bottleneck that drained designer resources at the worst possible moment.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div class="constraint-nav">
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p">
+              I transitioned the library to a <strong>Variable-Driven and Nested Component
+              Architecture</strong>. By implementing a multi-stage nesting approach, I enabled
+              "Single-Source" editing — where a content update in one module propagates across
+              all sprint pages — significantly reducing manual labor and human error during
+              high-stakes launches.
+            </p>
+          </div>
+        </div>
+
+        <div class="constraint-card">
+          <div class="constraint-problem">
+            <span class="constraint-label">Constraint 04</span>
+            <span class="constraint-title">"The Documentation Gap"</span>
+            <p class="cs-p" style="margin-top:8px">
+              While a style guide existed, the lack of formal documentation led to interpretation
+              errors during handoffs. Developers were making judgment calls that should have been
+              resolved in design.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div class="constraint-nav">
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p">
+              I leveraged <strong>Figma Variables to hard-code style standards into the components
+              themselves</strong>. This "Design as Code" approach ensured that brand standards were
+              baked into the system, paving the way for alignment with Fixed Business design tokens
+              and eventual AEM integration.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARCHITECTURE -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Architecture
+        <small>The System Design</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Core-to-Local:<br>A Two-Tiered Strategy</h2>
+        <p class="cs-p">
+          To balance brand consistency with the fast-paced demands of monthly site releases,
+          I developed a "Core-to-Local" library strategy. This prevented the main library from
+          becoming bloated while giving designers the flexibility needed for rapid iteration.
+        </p>
+
+        <div class="cs-2col">
+          <div class="cs-2col-item">
+            <span class="label">Tier 01</span>
+            <div class="title">Main Component Library</div>
+            <p class="cs-p" style="font-size:13px">
+              Centralizes all core UI elements. Every designer starts from the same high-quality,
+              brand-verified foundation. This file is the single source of truth for the organization.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Tier 02</span>
+            <div class="title">Localized Release Files</div>
+            <p class="cs-p" style="font-size:13px">
+              Designers build nested components inside specific quarterly release files.
+              Market-specific promos or legal claims stay organized without cluttering the global system.
+            </p>
+          </div>
+        </div>
+
+        <div class="cs-callout">
+          <span class="cs-callout-label">The "Evergreen" Logic</span>
+          <p class="cs-p" style="font-size:13px">
+            The system is built to be reusable. If a promo is repeated, designers update the parent
+            component once — and it reflects across the entire release cycle, eliminating redundant
+            manual work.
+          </p>
+        </div>
+
+        <div>
+          <img class="cs-img-full" src="/assets/cs1-flowchart.jpg" alt="Monthly release design hierarchy diagram" loading="lazy" />
+          <div class="cs-img-cap">
+            <span>Monthly Release Design Hierarchy</span>
+            <span>Grandparent → Parent → Release Pages</span>
+          </div>
+        </div>
+
+        <div>
+          <img class="cs-img-full" src="/assets/cs1-files.jpg" alt="Quarterly release file organization in Figma" loading="lazy" />
+          <div class="cs-img-cap">
+            <span>Quarterly Release File Organization</span>
+            <span>Each file contains nested parent components for multi-edit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TECHNICAL -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Technical
+        <small>Implementation</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Variable-Driven.<br>AEM-Ready.</h2>
+        <p class="cs-p">
+          In late 2025, I evolved the library from static components to a <em>fully responsive,
+          tokenized system</em>. This was the final step in ensuring our design intent translated
+          perfectly to the development environment.
+        </p>
+
+        <div class="cs-2col">
+          <div class="cs-2col-item">
+            <span class="label">Responsive Breakpoints</span>
+            <div class="title">Automated Layout Shifts</div>
+            <p class="cs-p" style="font-size:13px">
+              Standardized module variants and breakpoints to automate layout shifts across all
+              Optimum Mobile properties — Desktop Large, Medium, Small, Tablet, and Mobile.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Figma Variables</span>
+            <div class="title">Spacing, Color, Padding</div>
+            <p class="cs-p" style="font-size:13px">
+              Implemented Figma Variables to handle spacing, color, padding, and breakpoints —
+              variables attached to styles within the file, creating a true "Design as Code" foundation.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Multi-Edit Efficiency</span>
+            <div class="title">One Update, All Pages</div>
+            <p class="cs-p" style="font-size:13px">
+              Leveraged Figma's Multi-Edit capabilities. Updating one "Parent" instance
+              in a release file swaps promo offers across an entire month's worth of screens instantly.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">AEM Parity</span>
+            <div class="title">Eliminating QA Friction</div>
+            <p class="cs-p" style="font-size:13px">
+              Redefined handoff protocols away from static specs to achieve 1:1 parity with
+              engineering, drastically reducing the "design QA" phase of the development lifecycle.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <img class="cs-img-full" src="/assets/cs1-variables.jpg" alt="Figma Variables spacing system — responsive breakpoints" loading="lazy" />
+          <div class="cs-img-cap">
+            <span>Figma Variables — Spacing System</span>
+            <span>Frame layouts, containers, and grid specs across all 5 breakpoints</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERSHIP -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Leadership
+        <small>Expansion</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Scaling the<br>Blueprint.</h2>
+        <p class="cs-p">
+          The success of the Mobile library created a mandate. In late 2025, I took on the
+          Fixed Business stream — tasked with bringing the same operational excellence to a
+          second, separate business unit.
+        </p>
+        <p class="cs-p">
+          <strong>Mentorship:</strong> I guided the Fixed Business designer in establishing their
+          foundational library, ensuring they adopted the same responsive and variable-backed logic
+          I established for Mobile.
+        </p>
+        <p class="cs-p">
+          <strong>Team Governance:</strong> I now lead a team of three designers, serving as the
+          final design authority — ensuring cross-platform consistency across both Mobile and Fixed
+          while managing an external vendor relationship.
+        </p>
+        <div class="cs-callout">
+          <span class="cs-callout-label">Strategic Alignment</span>
+          <p class="cs-p" style="font-size:13px">
+            By mapping our Figma variables to the AEM technical roadmap, I've synchronized current
+            design output with our future platform. Every component built today is a
+            "plug-and-play" asset for tomorrow — virtually eliminating the friction of the upcoming
+            migration.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHIPPED WORK -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Shipped
+        <small>Design → Live</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Design to<br>Production.</h2>
+        <p class="cs-p">
+          The Optimum Devices gridwall redesign is one example of how this system operates
+          end-to-end: designed in Figma using the variable-backed component library,
+          handed off with exact specs, and shipped with high fidelity to the live site.
+        </p>
+        <div class="cs-img-pair">
+          <div>
+            <img src="/assets/cs1-design.jpg" alt="Figma wireframe — Optimum Devices page" loading="lazy" style="width:100%;height:280px;object-fit:cover;object-position:top;border:1px solid var(--border-mid);" />
+            <div class="cs-img-cap"><span>Figma Design</span></div>
+          </div>
+          <div>
+            <img src="/assets/cs1-live.jpg" alt="Live — Optimum Devices page" loading="lazy" style="width:100%;height:280px;object-fit:cover;object-position:top;border:1px solid var(--border-mid);" />
+            <div class="cs-img-cap"><span>Live Production</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTCOME -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Outcome
+        <small>Impact</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">From Solo Mission<br>to Design Operation.</h2>
+        <p class="cs-p">
+          What started as a solo effort to fix a broken handoff process has evolved into a
+          high-velocity design operation supporting two business units.
+        </p>
+
+        <div class="cs-metrics">
+          <div class="cs-metric">
+            <span class="cs-metric-val">0→1</span>
+            <span class="cs-metric-label">Figma infrastructure built<br>from scratch</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">1:1</span>
+            <span class="cs-metric-label">Design-to-code parity<br>with AEM</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">3</span>
+            <span class="cs-metric-label">Designers led across<br>Mobile + Fixed</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">2</span>
+            <span class="cs-metric-label">Business units<br>unified under one system</span>
+          </div>
+        </div>
+
+        <p class="cs-p">
+          Between 2022 and 2024, I expanded the Mobile library to include complex,
+          multi-variant components supporting the end-to-end user journey. Most recently,
+          Figma Variables and fully responsive breakpoints have drastically reduced the
+          manual "redlining" previously required for developer handoff.
+        </p>
+        <p class="cs-p">
+          As Lead for Fixed Business, I used the Mobile blueprint to guide the Fixed team
+          in building their own library from scratch. Today, every component across both
+          Mobile and Fixed is fully responsive and variable-backed —
+          <em>turning the design system into a true product</em> that enables the team
+          to ship faster and with significantly higher technical accuracy.
+        </p>
+      </div>
+    </div>
+
+  </div><!-- /cs-body -->
+
+  <!-- ── CASE STUDY FOOTER NAV ────────────────────────────── -->
+  <div class="cs-footer-nav">
+    <a href="/index.html#work" class="cs-footer-link">
+      <span class="cs-footer-dir">← Portfolio</span>
+      <span class="cs-footer-name">All Work</span>
+    </a>
+    <span class="cs-footer-sep">/</span>
+    <a href="/cs2.html" class="cs-footer-link" style="text-align:right">
+      <span class="cs-footer-dir">Next Case Study →</span>
+      <span class="cs-footer-name">Enterprise Migrations</span>
+    </a>
+  </div>
+
+  <footer>
+    <span>© 2025 Adriel Choo</span>
+    <span>Case Study 01 / 04</span>
+    <span>adrielchoo.com</span>
+  </footer>
+
+  <script>
+    'use strict';
+
+    /* Clock */
+    const clockEl = document.getElementById('clock');
+    function tick() {
+      const now = new Date();
+      clockEl.textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
+    tick(); setInterval(tick, 1000);
+
+    /* Cursor */
+    const cur  = document.getElementById('cursor');
+    const ring = document.getElementById('cursor-ring');
+    let mx=-100,my=-100,rx=-100,ry=-100;
+    document.addEventListener('mousemove', e => {
+      mx=e.clientX; my=e.clientY;
+      cur.style.left=mx+'px'; cur.style.top=my+'px';
+    });
+    (function anim(){
+      rx+=(mx-rx)*0.11; ry+=(my-ry)*0.11;
+      ring.style.left=rx+'px'; ring.style.top=ry+'px';
+      requestAnimationFrame(anim);
+    })();
+    document.querySelectorAll('a, .constraint-card, .cs-2col-item, .cs-metric').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cur.classList.add('active');ring.classList.add('active');});
+      el.addEventListener('mouseleave',()=>{cur.classList.remove('active');ring.classList.remove('active');});
+    });
+
+    /* Scroll reveal */
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}
+      });
+    },{threshold:0.05,rootMargin:'0px 0px -24px 0px'});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+    /* Show nav title after scroll */
+    const navTitle = document.querySelector('.cs-nav-title');
+    window.addEventListener('scroll',()=>{
+      navTitle.style.display = window.scrollY > 200 ? 'block' : 'none';
+    },{passive:true});
+  </script>
+</body>
+</html>

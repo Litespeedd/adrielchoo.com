@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Orchestrating Enterprise Migrations — Adriel Choo</title>
+  <meta name="description" content="Case Study: Maintaining 1:1 design integrity through two large-scale enterprise CMS transitions at Optimum." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#080808; --bg-raised:#0d0d0d; --surface:#121212; --surface-2:#171717;
+      --border:rgba(255,255,255,0.07); --border-mid:rgba(255,255,255,0.12); --border-hi:rgba(255,255,255,0.2);
+      --text-1:#F0F0EC; --text-2:#888; --text-3:#444; --text-4:#2a2a2a;
+      --accent:#FF1F1F; --accent-lo:rgba(255,31,31,0.06); --accent-border:rgba(255,31,31,0.28);
+      --font-display:'Bebas Neue',sans-serif; --font-mono:'Space Mono',monospace; --font-body:'Barlow',sans-serif;
+      --ease:cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;cursor:none;font-size:16px;}
+    body{background:var(--bg);color:var(--text-1);font-family:var(--font-body);font-weight:300;line-height:1.6;overflow-x:hidden;}
+    a{color:inherit;text-decoration:none;}
+    img{display:block;max-width:100%;}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:9000;}
+    #cursor{position:fixed;width:7px;height:7px;background:var(--accent);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .15s var(--ease),height .15s var(--ease);}
+    #cursor-ring{position:fixed;width:30px;height:30px;border:1px solid rgba(255,31,31,0.35);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .25s var(--ease),height .25s var(--ease),border-color .25s;}
+    #cursor.active{width:10px;height:10px;} #cursor-ring.active{width:40px;height:40px;border-color:var(--accent);}
+    #statusbar{position:fixed;top:0;left:0;right:0;height:28px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;z-index:800;font-family:var(--font-mono);font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-3);}
+    .s-left,.s-right{display:flex;align-items:center;gap:20px;}
+    .blink-dot{display:inline-block;width:5px;height:5px;background:var(--accent);border-radius:50%;animation:blink 1.4s step-end infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    #cs-nav{position:fixed;top:28px;left:0;right:0;height:56px;background:rgba(8,8,8,0.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;z-index:799;}
+    .cs-nav-back{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-2);transition:color .2s;}
+    .cs-nav-back::before{content:'←';font-size:11px;} .cs-nav-back:hover{color:var(--text-1);}
+    .cs-nav-title{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-3);display:none;}
+    .cs-nav-idx{font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-3);}
+    .cs-nav-idx span{color:var(--accent);}
+    #cs-hero{padding:128px 40px 80px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+    .cs-hero-grid{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+    .cs-hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,transparent 20%,var(--bg) 75%);pointer-events:none;}
+    .cs-hero-inner{position:relative;z-index:1;max-width:1100px;}
+    .cs-eyebrow{font-family:var(--font-mono);font-size:8px;letter-spacing:0.3em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:12px;}
+    .cs-eyebrow::before{content:'02 / 04';color:var(--text-3);}
+    .cs-eyebrow::after{content:'';display:inline-block;width:32px;height:1px;background:var(--accent-border);}
+    .cs-title{font-family:var(--font-display);font-size:clamp(52px,8vw,108px);line-height:0.9;letter-spacing:0.01em;color:var(--text-1);margin-bottom:40px;}
+    .cs-meta-strip{display:flex;gap:48px;flex-wrap:wrap;padding-top:32px;border-top:1px solid var(--border);}
+    .cs-meta-item{display:flex;flex-direction:column;gap:6px;}
+    .cs-meta-key{font-family:var(--font-mono);font-size:7px;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-3);}
+    .cs-meta-val{font-family:var(--font-mono);font-size:11px;color:var(--text-1);line-height:1.5;}
+    .cs-body{max-width:1100px;margin:0 auto;padding:0 40px;}
+    .cs-section{display:grid;grid-template-columns:200px 1fr;gap:48px;padding:64px 0;border-bottom:1px solid var(--border);}
+    .cs-section:last-child{border-bottom:none;}
+    .cs-sec-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);padding-top:4px;line-height:1.8;}
+    .cs-sec-label small{display:block;color:var(--text-3);font-size:7px;letter-spacing:0.2em;margin-top:6px;}
+    .cs-sec-body{display:flex;flex-direction:column;gap:24px;}
+    .cs-h2{font-family:var(--font-display);font-size:clamp(28px,3.5vw,46px);line-height:0.95;letter-spacing:0.02em;color:var(--text-1);}
+    .cs-h3{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-1);margin-bottom:4px;}
+    .cs-p{font-size:15px;color:var(--text-2);line-height:1.75;max-width:640px;}
+    .cs-p strong{color:var(--text-1);font-weight:400;} .cs-p em{color:var(--accent);font-style:normal;}
+    .constraint-card{border-left:2px solid var(--border-mid);padding:20px 0 20px 24px;display:flex;flex-direction:column;gap:16px;transition:border-color .2s;}
+    .constraint-card:hover{border-color:var(--accent-border);}
+    .constraint-label{font-family:var(--font-mono);font-size:7px;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-3);}
+    .constraint-title{font-family:var(--font-mono);font-size:11px;color:var(--accent);letter-spacing:0.05em;}
+    .constraint-divider{width:20px;height:1px;background:var(--border-mid);}
+    .constraint-nav-label{font-family:var(--font-mono);font-size:7px;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-3);}
+    .cs-callout{background:var(--bg-raised);border:1px solid var(--border-mid);border-left:2px solid var(--accent);padding:20px 24px;display:flex;flex-direction:column;gap:8px;}
+    .cs-callout-label{font-family:var(--font-mono);font-size:7px;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent);}
+    .cs-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .cs-2col-item{background:var(--surface);border:1px solid var(--border);padding:24px 20px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s;}
+    .cs-2col-item:hover{border-color:var(--border-hi);}
+    .cs-2col-item .label{font-family:var(--font-mono);font-size:7px;letter-spacing:0.28em;text-transform:uppercase;color:var(--accent);}
+    .cs-2col-item .title{font-size:14px;font-weight:500;color:var(--text-1);}
+    .cs-metrics{display:flex;flex-wrap:wrap;gap:2px;margin-top:8px;}
+    .cs-metric{background:var(--surface);border:1px solid var(--border);padding:20px 24px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:160px;}
+    .cs-metric-val{font-family:var(--font-display);font-size:36px;line-height:1;color:var(--text-1);}
+    .cs-metric-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-3);line-height:1.6;}
+    .cs-img-full{width:100%;border:1px solid var(--border-mid);display:block;}
+    .cs-img-pair{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+    .cs-img-pair img{width:100%;height:280px;object-fit:cover;object-position:top;border:1px solid var(--border-mid);}
+    .cs-img-cap{font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-3);margin-top:10px;display:flex;justify-content:space-between;}
+    .cs-footer-nav{padding:64px 40px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);}
+    .cs-footer-link{display:flex;flex-direction:column;gap:8px;transition:opacity .2s;}
+    .cs-footer-link:hover{opacity:0.7;}
+    .cs-footer-dir{font-family:var(--font-mono);font-size:7px;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-3);}
+    .cs-footer-name{font-family:var(--font-display);font-size:22px;letter-spacing:0.03em;color:var(--text-1);}
+    .cs-footer-sep{font-family:var(--font-mono);font-size:20px;color:var(--text-4);}
+    footer{padding:24px 40px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:8px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-3);}
+    .reveal{opacity:0;transform:translateY(20px);transition:opacity .55s var(--ease),transform .55s var(--ease);}
+    .reveal.visible{opacity:1;transform:translateY(0);}
+    @media(max-width:768px){
+      #cs-hero{padding:108px 20px 60px;} .cs-body{padding:0 20px;}
+      .cs-section{grid-template-columns:1fr;gap:24px;} .cs-sec-label{padding-top:0;}
+      .cs-2col{grid-template-columns:1fr;} .cs-img-pair{grid-template-columns:1fr;}
+      .cs-img-pair img{height:200px;} .cs-footer-nav{flex-direction:column;gap:32px;align-items:flex-start;}
+      .cs-meta-strip{gap:24px;} #cs-nav{padding:0 20px;} html{cursor:auto;}
+      #cursor,#cursor-ring{display:none;}
+    }
+  </style>
+</head>
+<body>
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
+
+  <div id="statusbar">
+    <div class="s-left"><span>AC · Case Study 02</span><span class="blink-dot"></span></div>
+    <div class="s-right"><span id="clock">--:--</span><span>NYC</span></div>
+  </div>
+
+  <nav id="cs-nav">
+    <a href="/index.html" class="cs-nav-back">Back to Portfolio</a>
+    <span class="cs-nav-title">Orchestrating Enterprise Migrations</span>
+    <span class="cs-nav-idx"><span>02</span> / 04</span>
+  </nav>
+
+  <header id="cs-hero">
+    <div class="cs-hero-grid"></div>
+    <div class="cs-hero-vignette"></div>
+    <div class="cs-hero-inner">
+      <div class="cs-eyebrow">CMS Architecture · Dev Collaboration · Platform Strategy</div>
+      <h1 class="cs-title">ORCHESTRATING<br>ENTERPRISE<br>MIGRATIONS</h1>
+      <div class="cs-meta-strip">
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Role</span>
+          <span class="cs-meta-val">Solo UI Lead<br>&amp; Architect</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Company</span>
+          <span class="cs-meta-val">Optimum Mobile<br>Altice USA</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Phase 1</span>
+          <span class="cs-meta-val">2021<br>Contentful → Drupal</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Phase 2</span>
+          <span class="cs-meta-val">2025 → Present<br>Drupal → AEM</span>
+        </div>
+        <div class="cs-meta-item">
+          <span class="cs-meta-key">Scale</span>
+          <span class="cs-meta-val">Enterprise<br>1,000s of Pages</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="cs-body">
+
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">Overview<small>The Challenge</small></div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Two Migrations.<br>Two Completely<br>Different Problems.</h2>
+        <p class="cs-p">
+          Enterprise migrations are rarely just technical shifts — they are pivotal moments
+          for a brand's digital evolution. Early in my career at Optimum, I navigated the
+          transition from Contentful to Drupal, which coincided with a
+          <strong>comprehensive company style redesign</strong>. The challenge was twofold:
+          designing an entirely new visual language while simultaneously meeting with
+          developers to map new components to the specific functional limitations of Drupal.
+        </p>
+        <p class="cs-p">
+          Today, I'm leading the move from Drupal to <em>Adobe Experience Manager (AEM)</em>.
+          This shift requires a fundamentally different level of rigor. Unlike the relative
+          flexibility of Drupal, AEM demands absolute precision during the build phase.
+          Every possible state must be hard-coded into the component architecture from day one —
+          there is no "adjusting on the fly."
+        </p>
+        <div class="cs-callout">
+          <span class="cs-callout-label">The Architect's Role</span>
+          <p class="cs-p" style="font-size:13px">
+            My value in these migrations is bridging the gap between design intent and backend
+            reality. I build the "Rules of the System" — Variables and Components — and then
+            manage the team to ensure those rules are applied flawlessly at the page level.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">Process<small>Constraints &amp; Navigation</small></div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Three Constraints.<br>Three Navigations.</h2>
+
+        <div class="constraint-card">
+          <div>
+            <span class="constraint-label">Constraint 01</span>
+            <div class="constraint-title" style="margin-top:6px">"The Drupal Flexibility Gap"</div>
+            <p class="cs-p" style="margin-top:8px">
+              During the Contentful → Drupal migration, we faced a "Visual Parity" challenge.
+              Drupal's backend constraints required real-time adjustments to padding and component
+              behavior that differed from our static Figma designs. The live site and the design
+              frequently diverged.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div>
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p" style="margin-top:8px">
+              I represented the UX team during <strong>"Live-Audit" sessions with engineering</strong>.
+              By looking "under the hood" of the CMS alongside developers, I made surgical tweaks
+              to design specifications — container logic, padding, component behavior — ensuring
+              the live build matched our Figma intent as closely as possible.
+            </p>
+          </div>
+        </div>
+
+        <div class="constraint-card">
+          <div>
+            <span class="constraint-label">Constraint 02</span>
+            <div class="constraint-title" style="margin-top:6px">"The AEM Rigidity Constraint"</div>
+            <p class="cs-p" style="margin-top:8px">
+              Transitioning to AEM introduced a shift from "flexibility" to "precision." Unlike
+              Drupal, where color variations and backgrounds could be adjusted on the fly, AEM
+              requires every possible state — every color variant, every size — to be
+              pre-authorized in the component architecture from day one.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div>
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p" style="margin-top:8px">
+              I overhauled our handoff protocol. I introduced a
+              <strong>Variable-Driven Library that explicitly mapped every breakpoint, color variant,
+              and component size</strong> — ensuring every design element was "pre-authorized" in
+              the AEM build, preventing future "new component" tickets for simple style changes.
+            </p>
+          </div>
+        </div>
+
+        <div class="constraint-card">
+          <div>
+            <span class="constraint-label">Constraint 03</span>
+            <div class="constraint-title" style="margin-top:6px">"The First-Mover Disadvantage"</div>
+            <p class="cs-p" style="margin-top:8px">
+              The Fixed Business team transitioned to AEM first with a blank slate. The Mobile
+              team, however, had to migrate a massive library of existing, complex legacy designs —
+              a fundamentally harder problem requiring a "structural upgrade" rather than a
+              clean-slate build.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div>
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p" style="margin-top:8px">
+              I performed a <strong>"Platform Gap Analysis"</strong> — documenting exactly how AEM
+              ingestion differed from Drupal. This ensured the Mobile team's migration wasn't a
+              "lift and shift," but a structural upgrade that leveraged AEM's cleaner architecture
+              for better long-term site performance.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">Strategy<small>Two Phases, Two Approaches</small></div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Designing for<br>CMS Logic.</h2>
+        <div class="cs-2col">
+          <div class="cs-2col-item">
+            <span class="label">Phase 01 · 2021</span>
+            <div class="title">Drupal Redesign</div>
+            <p class="cs-p" style="font-size:13px">
+              As solo lead, I created a new component library specifically tailored for the
+              Drupal migration. This required a deep "Data-to-Design" relationship — working
+              with engineering to ensure new brand styles didn't break under CMS constraints.
+              Creative redesign and platform migration executed simultaneously.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Phase 02 · 2025–Present</span>
+            <div class="title">AEM Precision Build</div>
+            <p class="cs-p" style="font-size:13px">
+              I personally architected the foundational library and variable components to meet
+              AEM's modular requirements. To scale the effort across thousands of pages, I
+              mentored and managed a designer on the Mobile team to handle instance populating
+              within the final AEM handoff files.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">Execution<small>The Handoff Files</small></div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Every State.<br>Pre-Authorized.</h2>
+        <p class="cs-p">
+          For the AEM transition, I moved away from "general" specs to highly specific
+          documentation that mirrors AEM's native component logic. Every visual option —
+          every background variant, layout state, and responsive breakpoint —
+          is explicitly documented so developers have no guesswork.
+        </p>
+        <div>
+          <img class="cs-img-full" src="/assets/cs2-handoff.jpg"
+               alt="AEM migration handoff file — Full Hero Module with developer annotations" loading="lazy" />
+          <div class="cs-img-cap">
+            <span>AEM Handoff File — Full Hero &amp; 50/50 Module</span>
+            <span>Developer annotations outline all visual states and layout rules</span>
+          </div>
+        </div>
+        <p class="cs-p">
+          All migrating pages were documented with complete component option matrices —
+          every visual variant displayed explicitly for developers to ensure nothing is
+          missed in the final live deployment. Mobile-specific pages were flagged for
+          higher build priority.
+        </p>
+        <div>
+          <img class="cs-img-full" src="/assets/cs2-matrix.jpg"
+               alt="Component options matrix — Full Hero Module and 5050 Hero Module documentation" loading="lazy" />
+          <div class="cs-img-cap">
+            <span>Component Option Matrix — Full Hero &amp; 5050 Hero Modules</span>
+            <span>All visual permutations documented across Desktop Large, Medium, Small, Tablet, Mobile</span>
+          </div>
+        </div>
+        <div class="cs-callout">
+          <span class="cs-callout-label">Technical Edge</span>
+          <p class="cs-p" style="font-size:13px">
+            While Drupal allowed for "on-the-fly" adjustments, AEM rewards architectural
+            foresight. By delivering precise, variable-backed specs now, I'm ensuring a
+            level of cross-platform consistency that was previously impossible in our
+            legacy systems.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">Outcome<small>Impact</small></div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Parity at Scale.</h2>
+        <div class="cs-metrics">
+          <div class="cs-metric">
+            <span class="cs-metric-val">2</span>
+            <span class="cs-metric-label">Enterprise CMS<br>migrations led</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">1:1</span>
+            <span class="cs-metric-label">Design-to-code parity<br>target for AEM rollout</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">1000s</span>
+            <span class="cs-metric-label">Enterprise pages<br>covered</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">0</span>
+            <span class="cs-metric-label">Guesswork in<br>developer handoff</span>
+          </div>
+        </div>
+        <p class="cs-p">
+          <strong>Redesign Success:</strong> Successfully launched a new company visual style
+          during the Drupal migration without disrupting the content model — creative
+          transformation and technical migration executed simultaneously.
+        </p>
+        <p class="cs-p">
+          <strong>Parity at Scale:</strong> On track to achieve 1:1 design-to-code parity for
+          the AEM rollout, covering thousands of enterprise-level pages. The variable-backed
+          handoff eliminates the "design QA" cycle that previously consumed weeks per release.
+        </p>
+        <p class="cs-p">
+          <strong>Effective Delegation:</strong> Scaled the AEM project by architecting the
+          system solo and then managing a designer to execute the high-volume page population —
+          maintaining architectural oversight while enabling team execution.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="cs-footer-nav">
+    <a href="/cs1.html" class="cs-footer-link">
+      <span class="cs-footer-dir">← Previous</span>
+      <span class="cs-footer-name">Scaling Design Ops</span>
+    </a>
+    <span class="cs-footer-sep">/</span>
+    <a href="/cs3.html" class="cs-footer-link" style="text-align:right">
+      <span class="cs-footer-dir">Next Case Study →</span>
+      <span class="cs-footer-name">Billing Transparency</span>
+    </a>
+  </div>
+
+  <footer>
+    <span>© 2025 Adriel Choo</span>
+    <span>Case Study 02 / 04</span>
+    <span>adrielchoo.com</span>
+  </footer>
+
+  <script>
+    'use strict';
+    const clockEl=document.getElementById('clock');
+    function tick(){const n=new Date();clockEl.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;}
+    tick();setInterval(tick,1000);
+    const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+    let mx=-100,my=-100,rx=-100,ry=-100;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+    (function a(){rx+=(mx-rx)*.11;ry+=(my-ry)*.11;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(a);})();
+    document.querySelectorAll('a,.constraint-card,.cs-2col-item,.cs-metric').forEach(el=>{
+      el.addEventListener('mouseenter',()=>{cur.classList.add('active');ring.classList.add('active');});
+      el.addEventListener('mouseleave',()=>{cur.classList.remove('active');ring.classList.remove('active');});
+    });
+    const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');io.unobserve(x.target);}});},{threshold:0.05,rootMargin:'0px 0px -24px 0px'});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+    const navTitle=document.querySelector('.cs-nav-title');
+    window.addEventListener('scroll',()=>{navTitle.style.display=window.scrollY>200?'block':'none';},{passive:true});
+  </script>
+</body>
+</html>

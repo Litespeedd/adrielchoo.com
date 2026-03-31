@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adriel Choo — Senior UX Designer</title>
+  <meta name="description" content="Senior UX Designer & Design System Lead with Fortune 500 experience building design systems, research-informed products, and AI-augmented UX workflows." />
+  <meta name="author" content="Adriel Choo" />
+  <meta property="og:title" content="Adriel Choo — Senior UX Designer" />
+  <meta property="og:description" content="Building systems that scale. Designing experiences that convert." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — Nothing-inspired dark OS aesthetic
+    ============================================================ */
+    :root {
+      --bg:           #080808;
+      --bg-raised:    #0d0d0d;
+      --surface:      #121212;
+      --surface-2:    #171717;
+      --border:       rgba(255,255,255,0.07);
+      --border-mid:   rgba(255,255,255,0.12);
+      --border-hi:    rgba(255,255,255,0.2);
+      --text-1:       #F0F0EC;
+      --text-2:       #888;
+      --text-3:       #444;
+      --text-4:       #2a2a2a;
+      --accent:       #FF1F1F;
+      --accent-lo:    rgba(255,31,31,0.06);
+      --accent-mid:   rgba(255,31,31,0.18);
+      --accent-border:rgba(255,31,31,0.28);
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-mono:    'Space Mono', monospace;
+      --font-body:    'Barlow', sans-serif;
+      --ease:         cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* ============================================================
+       BASE RESET
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; cursor: none; font-size: 16px; }
+    body {
+      background: var(--bg);
+      color: var(--text-1);
+      font-family: var(--font-body);
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ============================================================
+       SCAN LINE OVERLAY — subtle CRT feel
+    ============================================================ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.04) 3px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    #cursor {
+      position: fixed;
+      width: 7px;
+      height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10001;
+      transform: translate(-50%, -50%);
+      transition: width 0.15s var(--ease), height 0.15s var(--ease);
+    }
+    #cursor-ring {
+      position: fixed;
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(255,31,31,0.35);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      transition: width 0.25s var(--ease), height 0.25s var(--ease), border-color 0.25s;
+    }
+    #cursor.active  { width: 10px; height: 10px; }
+    #cursor-ring.active { width: 44px; height: 44px; border-color: var(--accent); }
+
+    /* ============================================================
+       BOOT SCREEN
+    ============================================================ */
+    #boot {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      transition: opacity 0.6s var(--ease);
+    }
+    #boot.done { opacity: 0; pointer-events: none; }
+    .boot-logo {
+      font-family: var(--font-display);
+      font-size: 56px;
+      letter-spacing: 0.08em;
+      color: var(--text-1);
+    }
+    .boot-logo span { color: var(--accent); }
+    .boot-bar-wrap {
+      width: 200px;
+      height: 1px;
+      background: var(--border-mid);
+      position: relative;
+      overflow: hidden;
+    }
+    .boot-bar {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0;
+      background: var(--accent);
+      transition: width 1.8s var(--ease);
+    }
+    .boot-status {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    /* ============================================================
+       STATUS BAR — Nothing OS top bar
+    ============================================================ */
+    #statusbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 28px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 800;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    #statusbar .s-left { display: flex; align-items: center; gap: 20px; }
+    #statusbar .s-right { display: flex; align-items: center; gap: 20px; }
+    .blink-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: blink 1.4s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ============================================================
+       NAVIGATION
+    ============================================================ */
+    nav {
+      position: fixed;
+      top: 28px; left: 0; right: 0;
+      height: 56px;
+      background: rgba(8,8,8,0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 799;
+    }
+    .nav-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      letter-spacing: 0.06em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      position: relative;
+      transition: color 0.2s;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0; right: 0;
+      height: 1px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.2s var(--ease);
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--text-1); }
+    .nav-links a:hover::after, .nav-links a.active::after { transform: scaleX(1); }
+    .nav-cta {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      padding: 8px 16px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-cta:hover { background: var(--accent); color: var(--bg); }
+
+    /* ============================================================
+       SHARED SECTION PRIMITIVES
+    ============================================================ */
+    section { padding: 120px 40px; }
+
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 48px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .section-eyebrow::before {
+      content: attr(data-n);
+      color: var(--text-3);
+    }
+    .section-eyebrow::after {
+      content: '';
+      display: inline-block;
+      width: 40px;
+      height: 1px;
+      background: var(--border-mid);
+    }
+    .section-heading {
+      font-family: var(--font-display);
+      font-size: clamp(42px, 5.5vw, 80px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      color: var(--text-1);
+      margin-bottom: 24px;
+    }
+    .section-body {
+      font-size: 15px;
+      color: var(--text-2);
+      line-height: 1.75;
+      max-width: 580px;
+    }
+
+    /* Reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Divider line */
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    #hero {
+      min-height: 100vh;
+      padding-top: 84px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Dot-matrix grid background — pure Nothing */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    /* Vignette over the grid */
+    .hero-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 60%, transparent 30%, var(--bg) 80%);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+    }
+    .hero-tag {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hero-tag::before {
+      content: '';
+      display: inline-block;
+      width: 20px; height: 1px;
+      background: var(--accent);
+    }
+    .hero-name {
+      font-family: var(--font-display);
+      font-size: clamp(72px, 12vw, 160px);
+      line-height: 0.88;
+      letter-spacing: 0.01em;
+      color: var(--text-1);
+      position: relative;
+    }
+    .hero-name .dim { color: rgba(240,240,236,0.15); }
+
+    .hero-desc {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      margin-top: 36px;
+      margin-bottom: 48px;
+      max-width: 460px;
+      line-height: 1.8;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 14px 22px;
+      transition: all 0.2s var(--ease);
+    }
+    .btn-fill {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-fill:hover { background: #ff3a3a; transform: translateY(-1px); }
+    .btn-outline {
+      color: var(--text-2);
+      border: 1px solid var(--border-mid);
+    }
+    .btn-outline:hover { color: var(--text-1); border-color: var(--border-hi); }
+
+    /* Hero decorative elements */
+    .hero-coords {
+      position: absolute;
+      bottom: 40px; right: 40px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      color: var(--text-3);
+      text-align: right;
+      line-height: 1.8;
+      z-index: 2;
+    }
+    .hero-scroll {
+      position: absolute;
+      bottom: 40px; left: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 2;
+    }
+    .scroll-track {
+      width: 1px;
+      height: 56px;
+      background: linear-gradient(to bottom, var(--accent) 0%, transparent 100%);
+      animation: scrollPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%,100%{ transform: scaleY(1); opacity:0.4; }
+      50%{ transform: scaleY(0.55); opacity:1; }
+    }
+    .scroll-label {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    /* Hero version badge */
+    .hero-badge {
+      position: absolute;
+      top: 84px; right: 40px;
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      z-index: 2;
+    }
+
+    /* ============================================================
+       ABOUT
+    ============================================================ */
+    #about {
+      background: var(--bg-raised);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 80px;
+      align-items: start;
+      max-width: 1200px;
+    }
+    .about-statement {
+      font-size: clamp(17px, 2.2vw, 24px);
+      line-height: 1.5;
+      color: var(--text-1);
+      font-weight: 300;
+    }
+    .about-statement em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .about-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .meta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-row:first-child { padding-top: 0; }
+    .meta-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .meta-key {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .meta-val {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+    .meta-val strong { color: var(--text-1); font-weight: 400; }
+    .meta-pill {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-lo);
+      border: 1px solid var(--accent-border);
+      padding: 3px 8px;
+      margin-top: 4px;
+    }
+
+    /* ============================================================
+       WORK — Case Studies
+    ============================================================ */
+    #work { position: relative; }
+
+    .work-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 56px;
+    }
+    .work-note {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      text-align: right;
+      line-height: 1.8;
+    }
+    .work-note a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* Case study grid: 2-col with first card spanning full width */
+    .case-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .case-card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 300px;
+      overflow: hidden;
+      transition: border-color 0.22s var(--ease);
+      cursor: none;
+    }
+    .case-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-lo);
+      opacity: 0;
+      transition: opacity 0.22s;
+    }
+    .case-card:hover { border-color: var(--accent-border); }
+    .case-card:hover::before { opacity: 1; }
+    .case-card.span-2 { grid-column: span 2; min-height: 380px; }
+
+    .case-idx {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.22em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .case-chip {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-lo);
+      border: 1px solid var(--accent-border);
+      padding: 3px 8px;
+      margin-bottom: 18px;
+    }
+    .case-title {
+      font-family: var(--font-display);
+      font-size: clamp(30px, 3.8vw, 52px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      color: var(--text-1);
+      margin-bottom: 16px;
+    }
+    .case-desc {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.65;
+      max-width: 520px;
+    }
+    .case-foot {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .case-attrs {
+      display: flex;
+      gap: 28px;
+    }
+    .case-attr { display: flex; flex-direction: column; gap: 5px; }
+    .case-attr-key {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    .case-attr-val {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-1);
+    }
+    .case-arrow {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: var(--text-3);
+      transition: border-color 0.2s, color 0.2s;
+      flex-shrink: 0;
+    }
+    .case-card:hover .case-arrow {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    /* Placeholder image block */
+    .case-img {
+      position: absolute;
+      top: 40px; right: 40px;
+      width: 140px; height: 88px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.1em;
+      color: var(--text-3);
+      text-transform: uppercase;
+    }
+    .case-card.span-2 .case-img {
+      width: 220px; height: 128px;
+    }
+
+    /* ============================================================
+       CAPABILITIES
+    ============================================================ */
+    #capabilities {
+      background: var(--bg-raised);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      margin-top: 64px;
+    }
+    .cap-item {
+      background: var(--bg-raised);
+      padding: 32px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s;
+    }
+    .cap-item:hover { background: var(--surface); }
+    .cap-n {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 36px;
+      color: var(--text-4);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+    .cap-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-1);
+      margin-bottom: 10px;
+    }
+    .cap-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .cap-tag {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      background: var(--surface);
+      padding: 3px 7px;
+    }
+    .cap-item:hover .cap-tag { background: var(--surface-2); }
+    .cap-bar {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: var(--accent);
+      width: 0;
+      transition: width 0.5s var(--ease);
+    }
+    .cap-item:hover .cap-bar { width: 100%; }
+
+    /* ============================================================
+       EXPERIENCE
+    ============================================================ */
+    #experience { }
+    .exp-list {
+      margin-top: 64px;
+      display: flex;
+      flex-direction: column;
+    }
+    .exp-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 40px;
+      padding: 36px 0;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      transition: padding-left 0.25s var(--ease);
+    }
+    .exp-row:first-child { border-top: 1px solid var(--border); }
+    .exp-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0;
+      background: var(--accent-lo);
+      border-left: 2px solid var(--accent);
+      transition: width 0.25s var(--ease), opacity 0.25s;
+      opacity: 0;
+    }
+    .exp-row:hover { padding-left: 20px; }
+    .exp-row:hover::before { width: 100%; opacity: 1; }
+
+    .exp-period {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--text-3);
+      line-height: 1.8;
+      padding-top: 3px;
+    }
+    .exp-now {
+      display: inline-block;
+      font-size: 6px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      padding: 2px 7px;
+      margin-top: 8px;
+    }
+    .exp-co {
+      font-family: var(--font-display);
+      font-size: 30px;
+      letter-spacing: 0.02em;
+      color: var(--text-1);
+      margin-bottom: 4px;
+    }
+    .exp-role {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      margin-bottom: 14px;
+    }
+    .exp-detail {
+      font-size: 13px;
+      color: var(--text-3);
+      line-height: 1.65;
+      max-width: 540px;
+    }
+    .exp-bullets {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      list-style: none;
+    }
+    .exp-bullets li {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-2);
+      letter-spacing: 0.02em;
+      padding-left: 16px;
+      position: relative;
+    }
+    .exp-bullets li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       TOOLS / STACK
+    ============================================================ */
+    #stack {
+      background: var(--bg-raised);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 40px;
+    }
+    .stack-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-top: 40px;
+    }
+    .tool-item {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .tool-item:hover { border-color: var(--border-hi); color: var(--text-1); }
+
+    /* ============================================================
+       CONTACT
+    ============================================================ */
+    #contact {
+      text-align: center;
+      padding: 140px 40px 100px;
+    }
+    .contact-pre {
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+    .contact-title {
+      font-family: var(--font-display);
+      font-size: clamp(52px, 9vw, 110px);
+      line-height: 0.9;
+      color: var(--text-1);
+      margin-bottom: 32px;
+    }
+    .contact-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--text-3);
+      margin-bottom: 56px;
+      line-height: 2;
+    }
+    .contact-links {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 80px;
+    }
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      border: 1px solid var(--border-mid);
+      padding: 12px 20px;
+      transition: all 0.2s;
+    }
+    .contact-link:hover { color: var(--text-1); border-color: var(--border-hi); }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      padding: 24px 40px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+    footer a { color: var(--text-3); transition: color 0.2s; }
+    footer a:hover { color: var(--text-1); }
+
+    /* ============================================================
+       CASE STUDY IMAGE GALLERY — split layout for featured cards
+    ============================================================ */
+    .case-body-split {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 40px;
+      align-items: start;
+    }
+    .case-gallery {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .case-gallery-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+    }
+    .case-gallery-single { width: 100%; }
+    .case-gimg {
+      display: block;
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      object-position: top;
+      border: 1px solid var(--border-mid);
+      transition: opacity 0.2s, border-color 0.2s;
+    }
+    .case-gimg.short { height: 88px; }
+    .case-gimg.wide  { height: 88px; object-position: center; }
+    .case-card:hover .case-gimg { border-color: var(--accent-border); }
+    .case-gimg-cap {
+      font-family: var(--font-mono);
+      font-size: 6px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      padding: 4px 2px 0;
+    }
+
+    /* ============================================================
+       MOBILE RESPONSIVE
+    ============================================================ */
+    @media (max-width: 900px) {
+      .about-grid { grid-template-columns: 1fr; gap: 48px; }
+      .cap-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      section { padding: 80px 20px; }
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      #statusbar { padding: 0 16px; }
+      #hero { padding: 84px 20px 80px; }
+      .hero-badge { display: none; }
+      .hero-coords { bottom: 80px; }
+      .case-grid { grid-template-columns: 1fr; }
+      .case-card.span-2 { grid-column: span 1; min-height: 300px; }
+      .case-body-split { grid-template-columns: 1fr; }
+      .case-gallery { display: none; }
+      .cap-grid { grid-template-columns: 1fr; }
+      .exp-row { grid-template-columns: 1fr; gap: 8px; }
+      .exp-row:hover { padding-left: 12px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+      html { cursor: auto; }
+      #cursor, #cursor-ring { display: none; }
+    }
+
+    /* ============================================================
+       GLITCH EFFECT — nothing brand twitch
+    ============================================================ */
+    .glitch { position: relative; display: inline-block; }
+    .glitch::before, .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      font: inherit;
+    }
+    .glitch::before {
+      color: var(--accent);
+      animation: g1 4s infinite linear;
+      clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%);
+      opacity: 0;
+    }
+    .glitch::after {
+      color: #0ef;
+      animation: g2 4s infinite linear;
+      clip-path: polygon(0 62%, 100% 62%, 100% 100%, 0 100%);
+      opacity: 0;
+    }
+    @keyframes g1 {
+      0%,92%,100%{opacity:0;transform:translate(0)}
+      93%{opacity:.7;transform:translate(-3px,-2px)}
+      95%{opacity:.5;transform:translate(3px,2px)}
+      97%{opacity:0;transform:translate(0)}
+    }
+    @keyframes g2 {
+      0%,92%,100%{opacity:0;transform:translate(0)}
+      94%{opacity:.5;transform:translate(3px,2px)}
+      96%{opacity:.4;transform:translate(-3px,-1px)}
+      98%{opacity:0;transform:translate(0)}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       BOOT SCREEN
+  ============================================================ -->
+  <div id="boot">
+    <div class="boot-logo">AC<span>.</span></div>
+    <div class="boot-bar-wrap">
+      <div class="boot-bar" id="boot-bar"></div>
+    </div>
+    <div class="boot-status" id="boot-status">Initializing</div>
+  </div>
+
+  <!-- ============================================================
+       CUSTOM CURSOR
+  ============================================================ -->
+  <div id="cursor"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- ============================================================
+       STATUS BAR
+  ============================================================ -->
+  <div id="statusbar">
+    <div class="s-left">
+      <span>AC · Portfolio</span>
+      <span class="blink-dot"></span>
+      <span>v2025</span>
+    </div>
+    <div class="s-right">
+      <span id="clock">--:--</span>
+      <span>NYC</span>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       NAVIGATION
+  ============================================================ -->
+  <nav id="nav">
+    <span class="nav-name">Adriel Choo</span>
+    <ul class="nav-links">
+      <li><a href="#about" data-section="about">About</a></li>
+      <li><a href="#work" data-section="work">Work</a></li>
+      <li><a href="#capabilities" data-section="capabilities">Skills</a></li>
+      <li><a href="#experience" data-section="experience">Experience</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta">Contact</a>
+  </nav>
+
+  <!-- ============================================================
+       HERO
+  ============================================================ -->
+  <section id="hero" aria-label="Hero">
+    <div class="hero-grid"></div>
+    <div class="hero-vignette"></div>
+
+    <div class="hero-badge">Senior UX Designer · 2025</div>
+
+    <div class="hero-inner">
+      <div class="hero-tag" id="hero-tag">Senior UX Designer &amp; Design System Lead</div>
+      <h1 class="hero-name">
+        <span class="glitch" data-text="ADRIEL">ADRIEL</span><br>
+        <span class="dim">CHOO</span>
+      </h1>
+      <p class="hero-desc">
+        Building systems that scale.<br>
+        Designing experiences that convert.
+      </p>
+      <div class="hero-actions">
+        <a href="#work" class="btn btn-fill">View Selected Work →</a>
+        <!-- TODO: Replace href with your actual resume PDF path -->
+        <a href="/resume.pdf" class="btn btn-outline" target="_blank" rel="noopener">Download Résumé ↗</a>
+      </div>
+    </div>
+
+    <div class="hero-scroll">
+      <div class="scroll-track"></div>
+      <span class="scroll-label">Scroll</span>
+    </div>
+    <div class="hero-coords">
+      <span>40.7128° N</span><br>
+      <span>74.0060° W</span><br>
+      <br>
+      <span>New York, NY</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ABOUT
+  ============================================================ -->
+  <section id="about" aria-label="About">
+    <div class="section-eyebrow" data-n="00">About</div>
+    <div class="about-grid reveal">
+      <div>
+        <p class="about-statement">
+          Currently leading design for <em>Optimum Mobile</em>. I specialize in building
+          scalable design systems, streamlining UX operations, and driving product growth
+          through end-to-end design ownership.<br><br>
+          My work sits at the intersection of systems architecture and user insight — turning
+          high-level strategy into <em>developer-ready reality</em>. Outside of Optimum, I
+          founded <em>Black Lotus UX</em>, a boutique AI-powered UX intelligence agency
+          that automates what used to take weeks.
+        </p>
+      </div>
+      <div class="about-meta">
+        <div class="meta-row">
+          <span class="meta-key">Current Role</span>
+          <span class="meta-val">
+            <strong>UX/UI Lead &amp; Systems Architect</strong><br>
+            Optimum Mobile — Altice USA
+          </span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Venture</span>
+          <span class="meta-val">
+            <strong>Founder, Black Lotus UX</strong><br>
+            AI-powered UX intelligence · Black Lotus Group LLC
+          </span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Targeting</span>
+          <span class="meta-val">
+            <strong>Senior UX · Lead UX · UX Manager</strong>
+            <span class="meta-pill">Open to Opportunities</span>
+          </span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Location</span>
+          <span class="meta-val">Brooklyn, NY — open to hybrid &amp; remote</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-key">Focus Areas</span>
+          <span class="meta-val">Design Systems · CMS Architecture · Research &amp; Validation · Team Leadership</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       WORK
+  ============================================================ -->
+  <section id="work" aria-label="Selected Work">
+    <div class="work-header">
+      <div>
+        <div class="section-eyebrow" data-n="01">Selected Work</div>
+        <h2 class="section-heading">Case Studies</h2>
+      </div>
+      <div class="work-note">
+        Full case studies available<br>
+        upon request — <a href="mailto:a.chootung@gmail.com">a.chootung@gmail.com</a>
+      </div>
+    </div>
+
+    <div class="case-grid">
+
+      <!-- ── Case Study 01 ── FEATURED ── -->
+      <div class="case-card span-2 reveal" style="transition-delay:0.1s" role="article">
+        <div class="case-body-split">
+          <div>
+            <div class="case-idx">01 / 04</div>
+            <span class="case-chip">Design Systems · Team Leadership · AEM</span>
+            <h3 class="case-title">Scaling Design<br>Operations</h3>
+            <p class="case-desc">
+              Inherited a design environment managed via PowerPoint decks. Over four years,
+              rebuilt it into a fully tokenized, variable-driven Figma ecosystem — Core-to-Local
+              library architecture, responsive breakpoints, quarterly release cadence — now
+              serving as the AEM-ready foundation across both Optimum Mobile and Fixed Business.
+              Led a team of three through the transition from static specs to 1:1 design-to-code parity,
+              eliminating the manual redlining phase entirely.
+            </p>
+          </div>
+          <div class="case-gallery">
+            <div class="case-gallery-pair">
+              <div>
+                <img class="case-gimg" src="/assets/cs1-design.jpg" alt="Figma wireframe — Optimum Devices page" loading="lazy">
+                <div class="case-gimg-cap">Figma Design</div>
+              </div>
+              <div>
+                <img class="case-gimg" src="/assets/cs1-live.jpg" alt="Live — Optimum Devices page" loading="lazy">
+                <div class="case-gimg-cap">Live Production</div>
+              </div>
+            </div>
+            <div class="case-gallery-pair">
+              <div>
+                <img class="case-gimg short" src="/assets/cs1-files.jpg" alt="Quarterly release file organization in Figma" loading="lazy">
+                <div class="case-gimg-cap">File Organization</div>
+              </div>
+              <div>
+                <img class="case-gimg short" src="/assets/cs1-variables.jpg" alt="Figma variables spacing system" loading="lazy">
+                <div class="case-gimg-cap">Variable System</div>
+              </div>
+            </div>
+            <div class="case-gallery-single">
+              <img class="case-gimg wide" src="/assets/cs1-flowchart.jpg" alt="Monthly release design hierarchy" loading="lazy">
+              <div class="case-gimg-cap">Release Hierarchy — Design Process</div>
+            </div>
+          </div>
+        </div>
+        <div class="case-foot">
+          <div class="case-attrs">
+            <div class="case-attr">
+              <span class="case-attr-key">Role</span>
+              <span class="case-attr-val">UX/UI Lead &amp; Systems Architect</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Timeline</span>
+              <span class="case-attr-val">2021 → Present</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Team</span>
+              <span class="case-attr-val">3 Designers + Vendor</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Tools</span>
+              <span class="case-attr-val">Figma · Variables · AEM</span>
+            </div>
+          </div>
+          <a href="/cs1.html" class="case-arrow" style="text-decoration:none">→</a>
+        </div>
+      </div>
+
+      <!-- ── Case Study 02 ── -->
+      <div class="case-card reveal" style="transition-delay:0.15s" role="article">
+        <div class="case-img">[ Add Screenshot ]</div>
+        <div>
+          <div class="case-idx">02 / 04</div>
+          <span class="case-chip">CMS Architecture · Dev Collaboration · Platform Strategy</span>
+          <h3 class="case-title">Orchestrating<br>Enterprise Migrations</h3>
+          <p class="case-desc">
+            Led two large-scale CMS migrations — Contentful to Drupal (2021, concurrent with
+            a full company rebrand) and Drupal to AEM (current). Each required a fundamentally
+            different approach: one creative, one architectural. Both demanded maintaining
+            1:1 design-to-code parity across thousands of enterprise pages, while bridging
+            the gap between design intent and backend reality.
+          </p>
+        </div>
+        <div class="case-foot">
+          <div class="case-attrs">
+            <div class="case-attr">
+              <span class="case-attr-key">Role</span>
+              <span class="case-attr-val">Solo UI Lead &amp; Architect</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Timeline</span>
+              <span class="case-attr-val">2021 + 2025–Present</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Scale</span>
+              <span class="case-attr-val">Enterprise · 1000s of pages</span>
+            </div>
+          </div>
+          <a href="/cs2.html" class="case-arrow" style="text-decoration:none">→</a>
+        </div>
+      </div>
+
+      <!-- ── Case Study 03 ── -->
+      <div class="case-card reveal" style="transition-delay:0.22s" role="article">
+        <div class="case-img">[ Add Screenshot ]</div>
+        <div>
+          <div class="case-idx">03 / 04</div>
+          <span class="case-chip">Service Design · UX Research · Stakeholder Influence</span>
+          <h3 class="case-title">Billing Transparency<br>&amp; Retention</h3>
+          <p class="case-desc">
+            A grassroots initiative — no PM, no roadmap slot — to redesign Optimum's
+            billing ecosystem and eliminate "Bill Shock." Moderated research with current
+            customers proved the value: 70% of participants reported a changed emotional
+            response to price increases. Research was compelling enough to influence a
+            Fixed Business vendor's roadmap and secure VP-level backing.
+          </p>
+        </div>
+        <div class="case-foot">
+          <div class="case-attrs">
+            <div class="case-attr">
+              <span class="case-attr-key">Role</span>
+              <span class="case-attr-val">UX Lead &amp; Research Architect</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Timeline</span>
+              <span class="case-attr-val">2025–Present</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Validated</span>
+              <span class="case-attr-val">Moderated Research</span>
+            </div>
+          </div>
+          <a href="/cs3.html" class="case-arrow" style="text-decoration:none">→</a>
+        </div>
+      </div>
+
+      <!-- ── Case Study 04 ── BLACK LOTUS ── FEATURED ── -->
+      <div class="case-card span-2 reveal" style="transition-delay:0.1s" role="article">
+        <div class="case-img">[ Add Screenshot ]</div>
+        <div>
+          <div class="case-idx">04 / 04</div>
+          <span class="case-chip">AI · Founder · End-to-End Product Ownership</span>
+          <h3 class="case-title">Black Lotus UX —<br>UX Intelligence Agency</h3>
+          <p class="case-desc">
+            Built in parallel with a Fortune 500 role, Black Lotus UX is a boutique
+            AI-powered UX intelligence agency — and a live case study in what happens
+            when a designer decides to build the tools the industry is missing.<br><br>
+            Six specialized AI agents handle the complete delivery stack: WCAG compliance
+            auditing across entire site crawls, competitive positioning scored across six
+            dimensions, heuristic analysis, Figma report generation, and role-adaptive
+            client outreach — all triggered from a single Slack command. A custom-built
+            Figma plugin pipes intelligence data directly into branded report templates.
+            Client reports surface on a live dashboard with score-drop alerts and PDF exports.<br><br>
+            The business itself is designed like a product: four service tiers with clear pricing,
+            Profit First banking infrastructure, and a complete set of NYC-reviewed legal documents.
+            What used to take a UX consultant weeks to deliver manually now runs overnight.
+          </p>
+        </div>
+        <div class="case-foot">
+          <div class="case-attrs">
+            <div class="case-attr">
+              <span class="case-attr-key">Role</span>
+              <span class="case-attr-val">Founder, Designer &amp; Builder</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Agents Deployed</span>
+              <span class="case-attr-val">6 Active</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Status</span>
+              <span class="case-attr-val">Operational</span>
+            </div>
+            <div class="case-attr">
+              <span class="case-attr-key">Stack</span>
+              <span class="case-attr-val">AI Agents · Figma MCP · n8n · Supabase</span>
+            </div>
+          </div>
+          <div class="case-arrow">→</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CAPABILITIES
+  ============================================================ -->
+  <section id="capabilities" aria-label="Capabilities">
+    <div class="section-eyebrow" data-n="02">What I Do</div>
+    <h2 class="section-heading reveal">Capabilities</h2>
+    <div class="cap-grid">
+
+      <div class="cap-item reveal" style="transition-delay:0.08s">
+        <div class="cap-n">01</div>
+        <div class="cap-name">Design Systems Architecture</div>
+        <div class="cap-tags">
+          <span class="cap-tag">Figma Variables</span>
+          <span class="cap-tag">Core-to-Local Library</span>
+          <span class="cap-tag">Token Systems</span>
+          <span class="cap-tag">Component Sets</span>
+        </div>
+        <div class="cap-bar"></div>
+      </div>
+
+      <div class="cap-item reveal" style="transition-delay:0.12s">
+        <div class="cap-n">02</div>
+        <div class="cap-name">CMS Strategy &amp; Dev Parity</div>
+        <div class="cap-tags">
+          <span class="cap-tag">AEM Architecture</span>
+          <span class="cap-tag">Drupal</span>
+          <span class="cap-tag">Variable Handoff</span>
+          <span class="cap-tag">1:1 Dev Parity</span>
+        </div>
+        <div class="cap-bar"></div>
+      </div>
+
+      <div class="cap-item reveal" style="transition-delay:0.16s">
+        <div class="cap-n">03</div>
+        <div class="cap-name">UX Research &amp; Validation</div>
+        <div class="cap-tags">
+          <span class="cap-tag">Moderated Testing</span>
+          <span class="cap-tag">UserTesting.com</span>
+          <span class="cap-tag">Qualitative Synthesis</span>
+          <span class="cap-tag">Exec Readouts</span>
+        </div>
+        <div class="cap-bar"></div>
+      </div>
+
+      <div class="cap-item reveal" style="transition-delay:0.2s">
+        <div class="cap-n">04</div>
+        <div class="cap-name">Design Leadership &amp; Governance</div>
+        <div class="cap-tags">
+          <span class="cap-tag">Final Design Authority</span>
+          <span class="cap-tag">Mentorship</span>
+          <span class="cap-tag">Release Process Design</span>
+          <span class="cap-tag">Vendor Management</span>
+        </div>
+        <div class="cap-bar"></div>
+      </div>
+
+      <div class="cap-item reveal" style="transition-delay:0.24s">
+        <div class="cap-n">05</div>
+        <div class="cap-name">Service Design &amp; Stakeholder Influence</div>
+        <div class="cap-tags">
+          <span class="cap-tag">Grassroots Initiatives</span>
+          <span class="cap-tag">VP-level Readouts</span>
+          <span class="cap-tag">Cross-functional Alignment</span>
+        </div>
+        <div class="cap-bar"></div>
+      </div>
+
+      <div class="cap-item reveal" style="transition-delay:0.28s">
+        <div class="cap-n">06</div>
+        <div class="cap-name">AI-Augmented UX Operations</div>
+        <div class="cap-tags">
+          <span class="cap-tag">Agent Pipelines</span>
+          <span class="cap-tag">Automated Auditing</span>
+          <span class="cap-tag">LLM Workflows</span>
+          <span class="cap-tag">Figma MCP</span>
+        </div>
+        <div class="cap-bar"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       EXPERIENCE
+  ============================================================ -->
+  <section id="experience" aria-label="Experience">
+    <div class="section-eyebrow" data-n="03">Where I've Been</div>
+    <h2 class="section-heading reveal">Experience</h2>
+    <div class="exp-list">
+
+      <div class="exp-row reveal">
+        <div class="exp-period">
+          2024 — Present
+          <div class="exp-now">Current</div>
+        </div>
+        <div>
+          <div class="exp-co">Optimum Mobile</div>
+          <div class="exp-role">Senior UX Designer · Altice USA</div>
+          <ul class="exp-bullets">
+            <li>Serve as final design authority for all Optimum Mobile launches — rigorous design review and production approval</li>
+            <li>Collaborate directly with Director and Senior Director of Design to translate business objectives into UX roadmaps</li>
+            <li>Engineered a variable-driven Figma component library; achieved 100% style guide consistency across all breakpoints</li>
+            <li>Established optimized quarterly release process, reducing file latency and improving historical tracking</li>
+            <li>Leading UI architecture for Drupal → AEM migration, mapping page requirements with lead developers on feasibility</li>
+            <li>Oversee 3 junior designers; mentored Fixed Business design lead in establishing their own library and release protocols</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-row reveal">
+        <div class="exp-period">2021 — 2024</div>
+        <div>
+          <div class="exp-co">Optimum Mobile</div>
+          <div class="exp-role">UX Designer II · Altice USA</div>
+          <ul class="exp-bullets">
+            <li>Pioneered the company's first Figma-to-dev handoff process, replacing legacy PowerPoint workflows</li>
+            <li>Established the initial user testing roadmap; conducted moderated and unmoderated studies via UserTesting.com</li>
+            <li>Led the redesign of live site modules during an enterprise-wide style update across the mobile ecosystem</li>
+            <li>Partnered with product owners and developers to design, test, and launch module layouts improving buyflow performance</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-row reveal">
+        <div class="exp-period">2024 — Present
+          <div class="exp-now">Venture</div>
+        </div>
+        <div>
+          <div class="exp-co">Black Lotus UX</div>
+          <div class="exp-role">Founder · Black Lotus Group LLC · Brooklyn, NY</div>
+          <ul class="exp-bullets">
+            <li>Built a six-agent AI pipeline handling WCAG auditing, competitive scoring, report generation, and outreach</li>
+            <li>Live client dashboard (reports.blacklotusux.com), custom Figma plugin, and four-tier service model</li>
+            <li>Full business infrastructure: Profit First banking, NYC-reviewed legal documents, and content brand</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-row reveal">
+        <div class="exp-period">2019 — 2021</div>
+        <div>
+          <div class="exp-co">Cornett</div>
+          <div class="exp-role">UX Designer</div>
+          <ul class="exp-bullets">
+            <li>Designed a high-traffic Super Bowl landing page for Kentucky Healthcare, meeting campaign KPIs and accessibility requirements under compressed timeline</li>
+            <li>Redesigned the digital calendar interface for Keeneland Horse Racing, incorporating custom event markers to improve user discovery</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       TOOL STACK
+  ============================================================ -->
+  <section id="stack" aria-label="Tools">
+    <div class="section-eyebrow" data-n="04">Toolbox</div>
+    <div class="stack-grid reveal">
+      <span class="tool-item">Figma</span>
+      <span class="tool-item">Figma Variables</span>
+      <span class="tool-item">Auto-Layout</span>
+      <span class="tool-item">Component Sets</span>
+      <span class="tool-item">Adobe Creative Suite</span>
+      <span class="tool-item">AEM</span>
+      <span class="tool-item">Drupal</span>
+      <span class="tool-item">HTML / CSS</span>
+      <span class="tool-item">UserTesting.com</span>
+      <span class="tool-item">Heatmapping</span>
+      <span class="tool-item">Jira</span>
+      <span class="tool-item">Workfront</span>
+      <span class="tool-item">Confluence</span>
+      <span class="tool-item">Notion</span>
+      <span class="tool-item">FigJam</span>
+      <span class="tool-item">n8n</span>
+      <span class="tool-item">Supabase</span>
+      <span class="tool-item">Figma MCP</span>
+      <span class="tool-item">Slack</span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTACT
+  ============================================================ -->
+  <section id="contact" aria-label="Contact">
+    <div class="contact-pre">Let's Work Together</div>
+    <h2 class="contact-title reveal">START A<br>CONVERSATION</h2>
+    <p class="contact-sub">
+      Open to Senior UX Designer, Lead UX Designer,<br>
+      and UX Manager roles — NYC &amp; remote.
+    </p>
+    <div class="contact-links reveal">
+      <a href="mailto:a.chootung@gmail.com" class="contact-link">✉ Email</a>
+      <a href="https://www.linkedin.com/in/chootung/" class="contact-link" target="_blank" rel="noopener">↗ LinkedIn</a>
+      <a href="https://adrielchoo.com" class="contact-link" target="_blank" rel="noopener">↗ Notion Portfolio</a>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer>
+    <span>© 2025 Adriel Choo</span>
+    <span>Brooklyn, NY</span>
+    <span>adrielchoo.com</span>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+    'use strict';
+
+    /* ── BOOT SCREEN ─────────────────────────────────────────── */
+    const boot       = document.getElementById('boot');
+    const bootBar    = document.getElementById('boot-bar');
+    const bootStatus = document.getElementById('boot-status');
+    const messages   = ['Initializing', 'Loading assets', 'Rendering portfolio', 'Ready'];
+    let msgIdx = 0;
+
+    function cycleMessage() {
+      if (msgIdx < messages.length) {
+        bootStatus.textContent = messages[msgIdx++];
+      }
+    }
+    cycleMessage();
+    const msgInterval = setInterval(() => {
+      cycleMessage();
+      if (msgIdx >= messages.length) clearInterval(msgInterval);
+    }, 450);
+
+    window.addEventListener('load', () => {
+      bootBar.style.width = '100%';
+      setTimeout(() => {
+        boot.classList.add('done');
+        setTimeout(() => { boot.remove(); }, 700);
+      }, 1900);
+    });
+
+    /* ── CLOCK ───────────────────────────────────────────────── */
+    const clockEl = document.getElementById('clock');
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      clockEl.textContent = `${h}:${m}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ── CUSTOM CURSOR ───────────────────────────────────────── */
+    const cur  = document.getElementById('cursor');
+    const ring = document.getElementById('cursor-ring');
+    let mx = -100, my = -100, rx = -100, ry = -100;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cur.style.left = mx + 'px';
+      cur.style.top  = my + 'px';
+    });
+
+    (function animRing() {
+      rx += (mx - rx) * 0.11;
+      ry += (my - ry) * 0.11;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+      requestAnimationFrame(animRing);
+    })();
+
+    document.querySelectorAll('a, button, .case-card, .cap-item, .exp-row, .tool-item').forEach(el => {
+      el.addEventListener('mouseenter', () => { cur.classList.add('active'); ring.classList.add('active'); });
+      el.addEventListener('mouseleave', () => { cur.classList.remove('active'); ring.classList.remove('active'); });
+    });
+
+    /* ── SCROLL REVEAL ───────────────────────────────────────── */
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ── NAV ACTIVE STATE ────────────────────────────────────── */
+    const sections  = document.querySelectorAll('section[id]');
+    const navAnchors = document.querySelectorAll('.nav-links a[data-section]');
+
+    function updateNav() {
+      let current = '';
+      sections.forEach(s => {
+        if (window.scrollY >= s.offsetTop - 80) current = s.id;
+      });
+      navAnchors.forEach(a => {
+        a.classList.toggle('active', a.dataset.section === current);
+      });
+    }
+    window.addEventListener('scroll', updateNav, { passive: true });
+
+    /* ── TEXT SCRAMBLE on hero tag ───────────────────────────── */
+    class Scramble {
+      constructor(el) {
+        this.el    = el;
+        this.chars = '!<>—_\\/[]{}=+*^?#0123456789ABCDEF';
+        this.raf   = null;
+      }
+      run(target) {
+        const q = [...target].map((to, i) => ({
+          from:  ' ',
+          to,
+          start: Math.floor(Math.random() * 10),
+          end:   Math.floor(Math.random() * 10) + 10,
+          char:  ''
+        }));
+        let frame = 0;
+        const tick = () => {
+          let out = '', done = 0;
+          q.forEach(o => {
+            if (frame >= o.end)      { out += o.to; done++; }
+            else if (frame >= o.start) {
+              if (!o.char || Math.random() < 0.28) {
+                o.char = this.chars[Math.floor(Math.random() * this.chars.length)];
+              }
+              out += `<span style="color:var(--accent);opacity:.45">${o.char}</span>`;
+            } else { out += o.from; }
+          });
+          this.el.innerHTML = out;
+          frame++;
+          if (done < q.length) this.raf = requestAnimationFrame(tick);
+        };
+        cancelAnimationFrame(this.raf);
+        tick();
+      }
+    }
+
+    const tagEl = document.getElementById('hero-tag');
+    if (tagEl) {
+      const originalHTML = tagEl.textContent;
+      const fx = new Scramble(tagEl);
+      setTimeout(() => fx.run(originalHTML), 1600);
+    }
+
+    /* ── SMOOTH SCROLL (polyfill for older Safari) ───────────── */
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+</html>
