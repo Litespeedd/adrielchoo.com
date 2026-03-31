@@ -641,6 +641,14 @@
       border-color: var(--accent);
       color: var(--accent);
     }
+    /* Full-card clickable overlay */
+    .case-card-link {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+    .case-arrow { position: relative; z-index: 2; }
+    .case-chip  { position: relative; z-index: 2; }
     /* Placeholder image block */
     .case-img {
       position: absolute;
@@ -1174,6 +1182,7 @@
 
       <!-- ── Case Study 01 ── FEATURED ── -->
       <div class="case-card span-2 reveal" style="transition-delay:0.1s" role="article">
+        <a href="/cs1.html" class="case-card-link" aria-label="View case study: Scaling Design Operations"></a>
         <div class="case-body-split">
           <div>
             <div class="case-idx">01 / 04</div>
@@ -1240,7 +1249,7 @@
 
       <!-- ── Case Study 02 ── -->
       <div class="case-card reveal" style="transition-delay:0.15s" role="article">
-        <div class="case-img">[ Add Screenshot ]</div>
+        <a href="/cs2.html" class="case-card-link" aria-label="View case study: Enterprise Migrations"></a>
         <div>
           <div class="case-idx">02 / 04</div>
           <span class="case-chip">CMS Architecture · Dev Collaboration · Platform Strategy</span>
@@ -1274,7 +1283,7 @@
 
       <!-- ── Case Study 03 ── -->
       <div class="case-card reveal" style="transition-delay:0.22s" role="article">
-        <div class="case-img">[ Add Screenshot ]</div>
+        <a href="/cs3.html" class="case-card-link" aria-label="View case study: Billing Transparency"></a>
         <div>
           <div class="case-idx">03 / 04</div>
           <span class="case-chip">Service Design · UX Research · Stakeholder Influence</span>
@@ -1308,7 +1317,7 @@
 
       <!-- ── Case Study 04 ── BLACK LOTUS ── FEATURED ── -->
       <div class="case-card span-2 reveal" style="transition-delay:0.1s" role="article">
-        <div class="case-img">[ Add Screenshot ]</div>
+        <a href="/cs4.html" class="case-card-link" aria-label="View case study: Black Lotus UX"></a>
         <div>
           <div class="case-idx">04 / 04</div>
           <span class="case-chip">AI · Founder · End-to-End Product Ownership</span>
@@ -1319,10 +1328,9 @@
             when a designer decides to build the tools the industry is missing.<br><br>
             Six specialized AI agents handle the complete delivery stack: WCAG compliance
             auditing across entire site crawls, competitive positioning scored across six
-            dimensions, heuristic analysis, Figma report generation, and role-adaptive
-            client outreach — all triggered from a single Slack command. A custom-built
-            Figma plugin pipes intelligence data directly into branded report templates.
-            Client reports surface on a live dashboard with score-drop alerts and PDF exports.<br><br>
+            dimensions, heuristic analysis, Playwright PDF report generation, and role-adaptive
+            client outreach — all triggered from a single Slack command. Client reports surface
+            on a live dashboard with score-drop alerts and PDF exports.<br><br>
             The business itself is designed like a product: four service tiers with clear pricing,
             Profit First banking infrastructure, and a complete set of NYC-reviewed legal documents.
             What used to take a UX consultant weeks to deliver manually now runs overnight.
@@ -1344,10 +1352,10 @@
             </div>
             <div class="case-attr">
               <span class="case-attr-key">Stack</span>
-              <span class="case-attr-val">AI Agents · Figma MCP · n8n · Supabase</span>
+              <span class="case-attr-val">AI Agents · Playwright · n8n · Supabase</span>
             </div>
           </div>
-          <div class="case-arrow">→</div>
+          <a href="/cs4.html" class="case-arrow" style="text-decoration:none;position:relative;z-index:2">→</a>
         </div>
       </div>
 
