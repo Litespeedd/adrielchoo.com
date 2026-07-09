@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scaling Design Operations — Adriel Choo</title>
-  <meta name="description" content="Case Study: From legacy PowerPoint handoffs to a fully tokenized, AEM-ready design system spanning two business units at Optimum." />
+  <meta name="description" content="Case Study: From legacy PowerPoint handoffs to a three-tier token architecture, multi-LOB theming system, and AI-assisted component library at Optimum." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
@@ -291,6 +291,75 @@
       font-size: 14px; font-weight: 500; color: var(--text-1);
     }
 
+    /* Three-column grid */
+    .cs-3col {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px;
+    }
+    .cs-3col-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 24px 20px;
+      display: flex; flex-direction: column; gap: 10px;
+      transition: border-color 0.2s;
+    }
+    .cs-3col-item:hover { border-color: var(--border-hi); }
+    .cs-3col-item .label {
+      font-family: var(--font-mono); font-size: 7px;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--accent);
+    }
+    .cs-3col-item .title {
+      font-size: 14px; font-weight: 500; color: var(--text-1);
+    }
+
+    /* Token chain */
+    .cs-token-chain {
+      display: flex; align-items: center; gap: 0;
+      flex-wrap: wrap;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-mid);
+      padding: 16px 20px;
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.05em;
+    }
+    .cs-token-chain-item {
+      padding: 6px 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      white-space: nowrap;
+    }
+    .cs-token-chain-item.active {
+      color: var(--accent);
+      border-color: var(--accent-border);
+      background: var(--accent-lo);
+    }
+    .cs-token-chain-arrow {
+      color: var(--text-4);
+      padding: 0 6px;
+      font-size: 12px;
+    }
+
+    /* Collection list */
+    .cs-coll-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+    }
+    .cs-coll-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      display: flex; align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-family: var(--font-mono); font-size: 10px;
+    }
+    .cs-coll-name { color: var(--text-1); letter-spacing: 0.05em; }
+    .cs-coll-meta { color: var(--text-3); font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; text-align: right; }
+    .cs-coll-item.accent-row { border-left: 2px solid var(--accent-border); }
+
     /* Metric highlight */
     .cs-metrics {
       display: flex; flex-wrap: wrap; gap: 2px;
@@ -301,7 +370,7 @@
       border: 1px solid var(--border);
       padding: 20px 24px;
       display: flex; flex-direction: column; gap: 8px;
-      flex: 1; min-width: 160px;
+      flex: 1; min-width: 140px;
     }
     .cs-metric-val {
       font-family: var(--font-display);
@@ -413,6 +482,8 @@
       .cs-section { grid-template-columns: 1fr; gap: 24px; }
       .cs-sec-label { padding-top: 0; }
       .cs-2col { grid-template-columns: 1fr; }
+      .cs-3col { grid-template-columns: 1fr; }
+      .cs-coll-list { grid-template-columns: 1fr; }
       .cs-img-pair { grid-template-columns: 1fr; }
       .cs-img-pair img { height: 200px; }
       .cs-img-grid { grid-template-columns: 1fr 1fr; }
@@ -423,6 +494,7 @@
       #cs-nav { padding: 0 20px; }
       html { cursor: auto; }
       #cursor, #cursor-ring { display: none; }
+      .cs-token-chain { gap: 4px; }
     }
   </style>
 </head>
@@ -445,7 +517,7 @@
 
   <!-- ── CS NAV ──────────────────────────────────────────── -->
   <nav id="cs-nav">
-    <a href="/" class="cs-nav-back">Back to Portfolio</a>
+    <a href="/index.html" class="cs-nav-back">Back to Portfolio</a>
     <span class="cs-nav-title">Scaling Design Operations</span>
     <span class="cs-nav-idx"><span>01</span> / 04</span>
   </nav>
@@ -455,16 +527,16 @@
     <div class="cs-hero-grid"></div>
     <div class="cs-hero-vignette"></div>
     <div class="cs-hero-inner">
-      <div class="cs-eyebrow">Design Systems · Team Leadership · AEM</div>
+      <div class="cs-eyebrow">Design Systems · Token Architecture · AI Integration</div>
       <h1 class="cs-title">SCALING<br>DESIGN<br>OPERATIONS</h1>
       <div class="cs-meta-strip">
         <div class="cs-meta-item">
           <span class="cs-meta-key">Role</span>
-          <span class="cs-meta-val">UX/UI Lead &amp;<br>Systems Architect</span>
+          <span class="cs-meta-val">UX/UI Lead &amp;<br>Systems Architect<br>Design System Lead</span>
         </div>
         <div class="cs-meta-item">
           <span class="cs-meta-key">Company</span>
-          <span class="cs-meta-val">Optimum Mobile<br>Altice USA</span>
+          <span class="cs-meta-val">Optimum (Fixed + Mobile)<br>Altice USA</span>
         </div>
         <div class="cs-meta-item">
           <span class="cs-meta-key">Timeline</span>
@@ -476,7 +548,7 @@
         </div>
         <div class="cs-meta-item">
           <span class="cs-meta-key">Tools</span>
-          <span class="cs-meta-val">Figma · Variables<br>AEM · Workfront</span>
+          <span class="cs-meta-val">Figma · Variables<br>Cursor · Figma MCP<br>AEM · Workfront</span>
         </div>
       </div>
     </div>
@@ -504,11 +576,11 @@
           complex buyflows and self-care journeys.
         </p>
         <p class="cs-p">
-          By late 2025, the goal evolved again: transitioning static components into a fully
-          responsive, variable-driven system for <strong>1:1 parity with our AEM implementation</strong>.
-          Simultaneously, my scope expanded to lead Fixed Business design strategy —
-          guiding that team in establishing their own foundational library while building
-          a unified, dev-ready handoff process across both business units.
+          By 2025, the goal evolved again: rebuilding the variable system from the ground up — not patching it,
+          but replacing it with a <strong>three-tier token architecture</strong> engineered for multi-LOB
+          scalability, dark mode readiness, and AI-assisted component generation. Simultaneously, my scope
+          expanded to Fixed Internet, requiring a single system to serve three separate business units —
+          Fixed, Mobile, and B2B — without duplication.
         </p>
       </div>
     </div>
@@ -520,10 +592,11 @@
         <small>Constraints &amp; Navigation</small>
       </div>
       <div class="cs-sec-body">
-        <h2 class="cs-h2">Four Problems.<br>Four Solutions.</h2>
+        <h2 class="cs-h2">Five Problems.<br>Five Solutions.</h2>
         <p class="cs-p">
-          Transitioning a legacy enterprise from fragmented design "decks" to a unified Figma
-          ecosystem required navigating deep technical debt and cultural resistance — simultaneously.
+          Transitioning a legacy enterprise from fragmented design decks to a unified,
+          production-ready token system required navigating deep technical debt, cultural resistance,
+          and architectural problems that didn't reveal themselves until the system needed to scale.
         </p>
 
         <div class="constraint-card">
@@ -614,6 +687,31 @@
             </p>
           </div>
         </div>
+
+        <div class="constraint-card">
+          <div class="constraint-problem">
+            <span class="constraint-label">Constraint 05</span>
+            <span class="constraint-title">"The Architecture Ceiling"</span>
+            <p class="cs-p" style="margin-top:8px">
+              By 2025, the existing variable system had reached its structural limit. Collections
+              were fragmented, aliases pointed to non-existent primitives, token naming was
+              inconsistent across the file, and there was no semantic alias layer. The system had
+              no viable path to multi-LOB theming, dark mode, or AI integration. The next
+              evolution required a ground-up rebuild — not a patch.
+            </p>
+          </div>
+          <div class="constraint-divider"></div>
+          <div class="constraint-nav">
+            <span class="constraint-nav-label">→ Navigation</span>
+            <p class="cs-p">
+              I audited all variable collections, documented <strong>22 critical issues</strong>
+              across broken aliases, structural conflicts, and missing token groups, then designed
+              a three-tier architecture from scratch — modeled after production design systems
+              at Radix UI, Atlassian, and GitHub Primer.
+            </p>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -624,38 +722,61 @@
         <small>The System Design</small>
       </div>
       <div class="cs-sec-body">
-        <h2 class="cs-h2">Core-to-Local:<br>A Two-Tiered Strategy</h2>
+        <h2 class="cs-h2">Three Tiers.<br>One Source of Truth.</h2>
         <p class="cs-p">
-          To balance brand consistency with the fast-paced demands of monthly site releases,
-          I developed a "Core-to-Local" library strategy. This prevented the main library from
-          becoming bloated while giving designers the flexibility needed for rapid iteration.
+          The DDL rebuild is structured around a strict three-tier token architecture.
+          Each tier has a single responsibility. Nothing skips a layer. The chain is unbreakable
+          by design — change a value at any tier and it cascades correctly to everything above it.
         </p>
 
-        <div class="cs-2col">
-          <div class="cs-2col-item">
+        <div class="cs-token-chain">
+          <span class="cs-token-chain-item">Primitives</span>
+          <span class="cs-token-chain-arrow">→</span>
+          <span class="cs-token-chain-item">Brand (LOB mode)</span>
+          <span class="cs-token-chain-arrow">→</span>
+          <span class="cs-token-chain-item">Colors / Typography</span>
+          <span class="cs-token-chain-arrow">→</span>
+          <span class="cs-token-chain-item">Component</span>
+          <span class="cs-token-chain-arrow">→</span>
+          <span class="cs-token-chain-item active">Universal Components</span>
+        </div>
+
+        <div class="cs-3col">
+          <div class="cs-3col-item">
             <span class="label">Tier 01</span>
-            <div class="title">Main Component Library</div>
+            <div class="title">Primitives</div>
             <p class="cs-p" style="font-size:13px">
-              Centralizes all core UI elements. Every designer starts from the same high-quality,
-              brand-verified foundation. This file is the single source of truth for the organization.
+              Raw values with no semantic meaning. Color hex values, font sizes, spacing steps,
+              radius, z-index, opacity. 175 variables. Never applied directly to components.
             </p>
           </div>
-          <div class="cs-2col-item">
+          <div class="cs-3col-item">
             <span class="label">Tier 02</span>
-            <div class="title">Localized Release Files</div>
+            <div class="title">Semantic Alias Layer</div>
             <p class="cs-p" style="font-size:13px">
-              Designers build nested components inside specific quarterly release files.
-              Market-specific promos or legal claims stay organized without cluttering the global system.
+              Intent and role. Colors, Typography, Brand — all aliasing into Primitives,
+              all carrying meaning. This is where dark mode and multi-LOB theming happen.
+              Change a value here and it cascades everywhere.
+            </p>
+          </div>
+          <div class="cs-3col-item">
+            <span class="label">Tier 03</span>
+            <div class="title">Component Tokens</div>
+            <p class="cs-p" style="font-size:13px">
+              Component-specific tokens that alias into the semantic layer. Zero hardcoded
+              values anywhere in the chain. Every property traces back to a named Primitive
+              through exactly two alias hops.
             </p>
           </div>
         </div>
 
         <div class="cs-callout">
-          <span class="cs-callout-label">The "Evergreen" Logic</span>
+          <span class="cs-callout-label">Example — Primary Button Background</span>
           <p class="cs-p" style="font-size:13px">
-            The system is built to be reusable. If a promo is repeated, designers update the parent
-            component once — and it reflects across the entire release cycle, eliminating redundant
-            manual work.
+            <strong>button/primary/bg</strong> → accent/bg/default → brand-theme/accent/bg/default → color/orange/500 → <em>#F66608</em>
+            <br /><br />
+            No component in the library touches a hex value directly. The token chain is
+            the single point of change for every visual decision in the system.
           </p>
         </div>
 
@@ -667,13 +788,241 @@
           </div>
         </div>
 
-        <div>
-          <img class="cs-img-full" src="/assets/cs1-files.jpg" alt="Quarterly release file organization in Figma" loading="lazy" />
-          <div class="cs-img-cap">
-            <span>Quarterly Release File Organization</span>
-            <span>Each file contains nested parent components for multi-edit</span>
+      </div>
+    </div>
+
+    <!-- DDL REBUILD -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        The Build
+        <small>DDL Rebuild</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">10 Collections.<br>295+ Tokens.<br>36 Text Styles.</h2>
+        <p class="cs-p">
+          The complete Digital Design Library rebuild covered every layer of the system — from
+          raw primitives to semantic aliases to component tokens to documentation. Every collection
+          was deleted and rebuilt from scratch following the three-tier architecture.
+        </p>
+
+        <div class="cs-coll-list">
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Primitives</span>
+            <span class="cs-coll-meta">175 vars · single mode</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Colors</span>
+            <span class="cs-coll-meta">63 vars · Light / Dark</span>
+          </div>
+          <div class="cs-coll-item accent-row">
+            <span class="cs-coll-name">Brand</span>
+            <span class="cs-coll-meta">8 vars · Internet / Mobile / B2B</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Typography</span>
+            <span class="cs-coll-meta">72 vars · Desktop / Tablet / Mobile</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Container</span>
+            <span class="cs-coll-meta">40 vars · 5 breakpoint modes</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Layout</span>
+            <span class="cs-coll-meta">7 vars · 5 breakpoint modes</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Spacing</span>
+            <span class="cs-coll-meta">33 vars · single mode</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Radius</span>
+            <span class="cs-coll-meta">17 vars · single mode</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Elevation</span>
+            <span class="cs-coll-meta">19 vars · single mode</span>
+          </div>
+          <div class="cs-coll-item">
+            <span class="cs-coll-name">Component</span>
+            <span class="cs-coll-meta">74 vars · Light mode</span>
           </div>
         </div>
+
+        <div class="cs-2col">
+          <div class="cs-2col-item">
+            <span class="label">Colors — Semantic Alias Layer</span>
+            <div class="title">Role / Prominence / State</div>
+            <p class="cs-p" style="font-size:13px">
+              Naming follows the role/prominence/state pattern from Radix and Atlassian.
+              Six groups: neutral, brand, accent, interactive, feedback, scrim.
+              Each token describes intent — <strong>accent/bg/hover</strong>,
+              <strong>feedback/negative/border</strong> — never a raw color name.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Typography — Responsive Scale</span>
+            <div class="title">Display-1 → Caption</div>
+            <p class="cs-p" style="font-size:13px">
+              Three breakpoint modes: Desktop, Tablet, Mobile. Display-1 scales from 90px to 50px.
+              Body and UI text flat across breakpoints. 36 text styles — each bound to Typography
+              variables. Switching a frame's mode updates all text layers automatically.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Container — Proportional Widths</span>
+            <div class="title">Named + Percentage Groups</div>
+            <p class="cs-p" style="font-size:13px">
+              Named containers (full, wide, default, narrow, content) per breakpoint,
+              plus seven percentage groups (20%–80%) per named container —
+              each calculated relative to its parent, making proportional split layouts
+              mathematically accurate across all five breakpoints.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Component Tokens</span>
+            <div class="title">Zero Hardcoded Values</div>
+            <p class="cs-p" style="font-size:13px">
+              74 component-specific tokens covering Button, Card, Input, Badge, Nav, Modal,
+              Toast, and Table. Every fill, stroke, radius, and spacing value in the component
+              library resolves through the full three-tier chain — no exceptions.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <img class="cs-img-full" src="/assets/cs1-variables.jpg" alt="Figma Variables — DDL collection architecture" loading="lazy" />
+          <div class="cs-img-cap">
+            <span>DDL Variable Collections</span>
+            <span>Three-tier architecture across 10 collections, 295+ tokens</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MULTI-LOB THEMING -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        Multi-LOB
+        <small>Brand Theming</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">One System.<br>Three Brands.<br>Zero Duplication.</h2>
+        <p class="cs-p">
+          The Brand collection is the architectural mechanism that makes universal components
+          possible across Fixed Internet, Mobile, and B2B. It follows the same pattern as
+          IBM Carbon's theme system and Microsoft Fluent's brand ramp approach.
+        </p>
+
+        <div class="cs-3col">
+          <div class="cs-3col-item">
+            <span class="label">Internet Mode</span>
+            <div class="title">Fixed Internet</div>
+            <p class="cs-p" style="font-size:13px">
+              Accent resolves to orange — <strong>#F66608</strong>. The primary CTA and conversion
+              color for optimum.com across homepage, buyflow, and account surfaces.
+            </p>
+          </div>
+          <div class="cs-3col-item">
+            <span class="label">Mobile Mode</span>
+            <div class="title">Optimum Mobile</div>
+            <p class="cs-p" style="font-size:13px">
+              Accent resolves to blue — <strong>#2760F0</strong>. Differentiates the Mobile
+              product line while inheriting the full Universal Component Library unchanged.
+            </p>
+          </div>
+          <div class="cs-3col-item">
+            <span class="label">B2B Mode</span>
+            <div class="title">Optimum Business</div>
+            <p class="cs-p" style="font-size:13px">
+              Accent resolves to navy — <strong>#002864</strong>. The B2B product inherits
+              the complete system from day one — no rebuild, no new library, one mode toggle.
+            </p>
+          </div>
+        </div>
+
+        <div class="cs-callout">
+          <span class="cs-callout-label">How It Works</span>
+          <p class="cs-p" style="font-size:13px">
+            Universal components bind to <strong>Component/*</strong> tokens.
+            Component tokens alias into <strong>Colors/accent/*</strong>.
+            Colors aliases into <strong>Brand/brand-theme/accent/*</strong>.
+            Brand has three modes — Internet, Mobile, B2B — each pointing to a different
+            primitive palette. Switching the Brand collection mode on a frame switches
+            every CTA, accent background, and interactive state across every component in scope.
+            No duplication. No per-LOB variants. One mode toggle.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- AI INTEGRATION -->
+    <div class="cs-section reveal">
+      <div class="cs-sec-label">
+        AI
+        <small>Integration</small>
+      </div>
+      <div class="cs-sec-body">
+        <h2 class="cs-h2">Token Architecture<br>as AI Infrastructure.</h2>
+        <p class="cs-p">
+          The token system was designed from the start to be machine-readable. Semantic names
+          like <strong>accent/bg/default</strong> and <strong>neutral/fg/placeholder</strong>
+          carry intent, not just values — giving AI tools a grammar to reason from and generate against.
+        </p>
+
+        <div class="cs-2col">
+          <div class="cs-2col-item">
+            <span class="label">Cursor + Figma MCP</span>
+            <div class="title">AI-Assisted Component Generation</div>
+            <p class="cs-p" style="font-size:13px">
+              I integrated Cursor with the Figma MCP to enable AI-assisted component generation
+              directly inside the design file. Components can be prompted, generated, and
+              validated against the token system in a single workflow — without leaving Figma.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Engineered Prompt Architecture</span>
+            <div class="title">System-Aware Generation</div>
+            <p class="cs-p" style="font-size:13px">
+              I authored a comprehensive Cursor prompt specifying the full token chain, all 16 
+              universal components, layer naming conventions, Auto Layout requirements, component
+              property standards, and multi-LOB compatibility rules. Output is token-wired,
+              production-ready Figma components — not rough approximations.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Universal Components</span>
+            <div class="title">16 Components. Full Variant Coverage.</div>
+            <p class="cs-p" style="font-size:13px">
+              Button, Input Field, Card, Badge, Navigation, Modal, Toast, Alert Banner, Table,
+              Select, Checkbox, Radio, Tooltip, Avatar, Icon Button, Divider — all built with
+              Auto Layout, variable bindings, and complete component properties across all
+              states. All cross-LOB compatible via the Brand mode toggle.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Design QA Automation</span>
+            <div class="title">AI as System Validator</div>
+            <p class="cs-p" style="font-size:13px">
+              Because token names carry semantic intent, AI can validate that components follow
+              the system — flagging hardcoded values, incorrect token references, and state
+              gaps the same way spell-check flags typos. This closes the QA loop at
+              the design layer before anything reaches production.
+            </p>
+          </div>
+        </div>
+
+        <div class="cs-callout">
+          <span class="cs-callout-label">Why This Works</span>
+          <p class="cs-p" style="font-size:13px">
+            Most AI design tools generate output that's visually close but not on-brand — because
+            they have no structured design context to work from. The DDL's three-tier token
+            architecture gives AI a machine-readable rulebook. The result is components that are
+            correct by default, not correct by coincidence.
+          </p>
+        </div>
+
       </div>
     </div>
 
@@ -686,9 +1035,10 @@
       <div class="cs-sec-body">
         <h2 class="cs-h2">Variable-Driven.<br>AEM-Ready.</h2>
         <p class="cs-p">
-          In late 2025, I evolved the library from static components to a <em>fully responsive,
-          tokenized system</em>. This was the final step in ensuring our design intent translated
-          perfectly to the development environment.
+          The variable system was built in parallel with a formal documentation layer —
+          six HTML documentation pages imported into Figma via Builder.io, covering
+          the Color System, Typography, Container, Layout, Spacing, and Getting Started guides.
+          Variable descriptions written directly into each token provide inline context while designing.
         </p>
 
         <div class="cs-2col">
@@ -697,15 +1047,8 @@
             <div class="title">Automated Layout Shifts</div>
             <p class="cs-p" style="font-size:13px">
               Standardized module variants and breakpoints to automate layout shifts across all
-              Optimum Mobile properties — Desktop Large, Medium, Small, Tablet, and Mobile.
-            </p>
-          </div>
-          <div class="cs-2col-item">
-            <span class="label">Figma Variables</span>
-            <div class="title">Spacing, Color, Padding</div>
-            <p class="cs-p" style="font-size:13px">
-              Implemented Figma Variables to handle spacing, color, padding, and breakpoints —
-              variables attached to styles within the file, creating a true "Design as Code" foundation.
+              Optimum properties — 1920, 1440, 1240, 768, and 375. Typography, container widths,
+              grid gutters, and section spacing all switch automatically per breakpoint mode.
             </p>
           </div>
           <div class="cs-2col-item">
@@ -720,16 +1063,26 @@
             <span class="label">AEM Parity</span>
             <div class="title">Eliminating QA Friction</div>
             <p class="cs-p" style="font-size:13px">
-              Redefined handoff protocols away from static specs to achieve 1:1 parity with
-              engineering, drastically reducing the "design QA" phase of the development lifecycle.
+              Token names are designed to map 1:1 to CSS custom properties — the same naming
+              convention in the design system becomes the variable name in code. This eliminates
+              the "design QA" translation layer between design and engineering entirely.
+            </p>
+          </div>
+          <div class="cs-2col-item">
+            <span class="label">Stakeholder Documentation</span>
+            <div class="title">VP-Ready Presentation</div>
+            <p class="cs-p" style="font-size:13px">
+              Built a five-slide executive presentation in Optimum brand colors covering the business
+              case, three-phase roadmap, AI integration strategy, stakeholder impact across all LOBs,
+              and the testing and validation approach — written for a non-technical VP audience.
             </p>
           </div>
         </div>
 
         <div>
-          <img class="cs-img-full" src="/assets/cs1-variables.jpg" alt="Figma Variables spacing system — responsive breakpoints" loading="lazy" />
+          <img class="cs-img-full" src="/assets/cs1-variables.jpg" alt="Figma Variables — spacing and container system" loading="lazy" />
           <div class="cs-img-cap">
-            <span>Figma Variables — Spacing System</span>
+            <span>Figma Variables — Spacing &amp; Container System</span>
             <span>Frame layouts, containers, and grid specs across all 5 breakpoints</span>
           </div>
         </div>
@@ -746,26 +1099,26 @@
         <h2 class="cs-h2">Scaling the<br>Blueprint.</h2>
         <p class="cs-p">
           The success of the Mobile library created a mandate. In late 2025, I took on the
-          Fixed Business stream — tasked with bringing the same operational excellence to a
-          second, separate business unit.
+          Fixed Internet and B2B streams — tasked with bringing the same operational excellence
+          to multiple separate business units under one unified system.
         </p>
         <p class="cs-p">
           <strong>Mentorship:</strong> I guided the Fixed Business designer in establishing their
           foundational library, ensuring they adopted the same responsive and variable-backed logic
-          I established for Mobile.
+          established for Mobile — and that their work plugged directly into the universal token chain.
         </p>
         <p class="cs-p">
-          <strong>Team Governance:</strong> I now lead a team of three designers, serving as the
-          final design authority — ensuring cross-platform consistency across both Mobile and Fixed
+          <strong>Team Governance:</strong> I lead a team of three designers, serving as the
+          final design authority — ensuring cross-platform consistency across Fixed, Mobile, and B2B
           while managing an external vendor relationship.
         </p>
         <div class="cs-callout">
           <span class="cs-callout-label">Strategic Alignment</span>
           <p class="cs-p" style="font-size:13px">
-            By mapping our Figma variables to the AEM technical roadmap, I've synchronized current
-            design output with our future platform. Every component built today is a
-            "plug-and-play" asset for tomorrow — virtually eliminating the friction of the upcoming
-            migration.
+            By mapping Figma variables to the AEM technical roadmap, I've synchronized current
+            design output with our future platform. The Brand collection's three-mode architecture
+            means the B2B product line can inherit the complete design system the moment it's needed —
+            without a rebuild, without a new file, without starting over.
           </p>
         </div>
       </div>
@@ -807,40 +1160,56 @@
         <h2 class="cs-h2">From Solo Mission<br>to Design Operation.</h2>
         <p class="cs-p">
           What started as a solo effort to fix a broken handoff process has evolved into a
-          high-velocity design operation supporting two business units.
+          high-velocity design operation — and a production-ready, AI-enabled design system —
+          supporting three lines of business.
         </p>
 
         <div class="cs-metrics">
           <div class="cs-metric">
             <span class="cs-metric-val">0→1</span>
-            <span class="cs-metric-label">Figma infrastructure built<br>from scratch</span>
-          </div>
-          <div class="cs-metric">
-            <span class="cs-metric-val">1:1</span>
-            <span class="cs-metric-label">Design-to-code parity<br>with AEM</span>
+            <span class="cs-metric-label">Figma infrastructure<br>built from scratch</span>
           </div>
           <div class="cs-metric">
             <span class="cs-metric-val">3</span>
-            <span class="cs-metric-label">Designers led across<br>Mobile + Fixed</span>
+            <span class="cs-metric-label">Tier token<br>architecture</span>
           </div>
           <div class="cs-metric">
-            <span class="cs-metric-val">2</span>
-            <span class="cs-metric-label">Business units<br>unified under one system</span>
+            <span class="cs-metric-val">295+</span>
+            <span class="cs-metric-label">Design tokens<br>across 10 collections</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">36</span>
+            <span class="cs-metric-label">Responsive text styles<br>bound to variables</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">3</span>
+            <span class="cs-metric-label">LOBs unified under<br>one mode toggle</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">3</span>
+            <span class="cs-metric-label">Designers led across<br>Fixed + Mobile</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">1:1</span>
+            <span class="cs-metric-label">Design-to-code<br>parity with AEM</span>
+          </div>
+          <div class="cs-metric">
+            <span class="cs-metric-val">AI</span>
+            <span class="cs-metric-label">Token architecture designed<br>for machine readability</span>
           </div>
         </div>
 
         <p class="cs-p">
-          Between 2022 and 2024, I expanded the Mobile library to include complex,
-          multi-variant components supporting the end-to-end user journey. Most recently,
-          Figma Variables and fully responsive breakpoints have drastically reduced the
-          manual "redlining" previously required for developer handoff.
+          The system is no longer a Figma file that requires a designer to interpret. It is a
+          <em>structured, documented, machine-readable design language</em> — built to onboard new
+          designers, generate components with AI tooling, theme across three lines of business
+          with a single mode toggle, and scale to every surface Optimum builds on.
         </p>
         <p class="cs-p">
-          As Lead for Fixed Business, I used the Mobile blueprint to guide the Fixed team
-          in building their own library from scratch. Today, every component across both
-          Mobile and Fixed is fully responsive and variable-backed —
-          <em>turning the design system into a true product</em> that enables the team
-          to ship faster and with significantly higher technical accuracy.
+          Every component built today is a plug-and-play asset for tomorrow —
+          <strong>turning the design system into a true product</strong> that enables the team
+          to ship faster, with significantly higher technical accuracy, and without starting over
+          every time the business grows.
         </p>
       </div>
     </div>
@@ -849,12 +1218,12 @@
 
   <!-- ── CASE STUDY FOOTER NAV ────────────────────────────── -->
   <div class="cs-footer-nav">
-    <a href="/#work" class="cs-footer-link">
+    <a href="/index.html#work" class="cs-footer-link">
       <span class="cs-footer-dir">← Portfolio</span>
       <span class="cs-footer-name">All Work</span>
     </a>
     <span class="cs-footer-sep">/</span>
-    <a href="/cs2/" class="cs-footer-link" style="text-align:right">
+    <a href="/cs2.html" class="cs-footer-link" style="text-align:right">
       <span class="cs-footer-dir">Next Case Study →</span>
       <span class="cs-footer-name">Enterprise Migrations</span>
     </a>
@@ -890,7 +1259,7 @@
       ring.style.left=rx+'px'; ring.style.top=ry+'px';
       requestAnimationFrame(anim);
     })();
-    document.querySelectorAll('a, .constraint-card, .cs-2col-item, .cs-metric').forEach(el=>{
+    document.querySelectorAll('a, .constraint-card, .cs-2col-item, .cs-3col-item, .cs-metric, .cs-coll-item').forEach(el=>{
       el.addEventListener('mouseenter',()=>{cur.classList.add('active');ring.classList.add('active');});
       el.addEventListener('mouseleave',()=>{cur.classList.remove('active');ring.classList.remove('active');});
     });
